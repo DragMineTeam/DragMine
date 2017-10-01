@@ -79,10 +79,10 @@ namespace pocketmine {
 	use pocketmine\wizard\SetupWizard;
 	use raklib\RakLib;
 
-	const NAME = "PocketMine-MP";
-	const VERSION = "1.7dev";
+	const NAME = "DragMine";
+	const VERSION = "1.0dev";
 	const API_VERSION = "3.0.0-ALPHA8";
-	const CODENAME = "[REDACTED]";
+	const CODENAME = "DragonBreath";
 
 	/*
 	 * Startup code. Do not look at it, it may harm you.
