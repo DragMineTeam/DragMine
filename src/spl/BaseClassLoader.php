@@ -127,9 +127,6 @@ class BaseClassLoader extends \Threaded implements ClassLoader{
 		if($path !== null){
 			include($path);
 			if(!class_exists($name, false) and !interface_exists($name, false) and !trait_exists($name, false)){
-				if($this->getParent() === null){
-					throw new ClassNotFoundException("Class $name not found");
-				}
 				return false;
 			}
 
@@ -140,8 +137,6 @@ class BaseClassLoader extends \Threaded implements ClassLoader{
 			$this->classes[] = $name;
 
 			return true;
-		}elseif($this->getParent() === null){
-			throw new ClassNotFoundException("Class $name not found");
 		}
 
 		return false;
@@ -155,10 +150,7 @@ class BaseClassLoader extends \Threaded implements ClassLoader{
 	 * @return string|null
 	 */
 	public function findClass($name){
-		$components = explode("\\", $name);
-
-		$baseName = implode(DIRECTORY_SEPARATOR, $components);
-
+		$baseName = str_replace("\\", DIRECTORY_SEPARATOR, $name);
 
 		foreach($this->lookup as $path){
 			if(PHP_INT_SIZE === 8 and file_exists($path . DIRECTORY_SEPARATOR . $baseName . "__64bit.php")){
