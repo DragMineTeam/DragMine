@@ -4,7 +4,7 @@
  *
  *  ____            _        _   __  __ _                  __  __ ____
  * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
- * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | "_ \ / _ \_____| |\/| | |_) |
  * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
  * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
  *
@@ -27,7 +27,6 @@ namespace pocketmine\network\mcpe\protocol;
 
 
 use pocketmine\network\mcpe\NetworkSession;
-use pocketmine\utils\BinaryStream;
 use pocketmine\utils\Utils;
 
 class LoginPacket extends DataPacket{
@@ -53,6 +52,17 @@ class LoginPacket extends DataPacket{
 	/** @var string */
 	public $skin = "";
 
+	public $deviceModel;
+	public $deviceOS;
+	public $ui = -1;
+	public $xuid = "";
+
+	public $languageCode = "unknown";
+	public $clientVersion = "unknown";
+	public $skinGeometryName = "";
+	public $skinGeometryData = "";
+	public $capeData = "";
+
 	/** @var array (the "chain" index contains one or more JWTs) */
 	public $chainData = [];
 	/** @var string */
@@ -64,24 +74,17 @@ class LoginPacket extends DataPacket{
 		return true;
 	}
 
-	public function mayHaveUnreadBytes() : bool{
-		return $this->protocol !== null and $this->protocol !== ProtocolInfo::CURRENT_PROTOCOL;
-	}
-
 	protected function decodePayload(){
 		$this->protocol = $this->getInt();
 
 		if($this->protocol !== ProtocolInfo::CURRENT_PROTOCOL){
-			if($this->protocol > 0xffff){ //guess MCPE <= 1.1
-				$this->offset -= 6;
-				$this->protocol = $this->getInt();
-			}
-			return; //Do not attempt to continue decoding for non-accepted protocols
+			$this->buffer = null;
+			return; //Do not attempt to decode for non-accepted protocols
 		}
 
-		$buffer = new BinaryStream($this->getString());
+		$this->setBuffer($this->getString(), 0);
 
-		$this->chainData = json_decode($buffer->get($buffer->getLInt()), true);
+		$this->chainData = json_decode($this->get($this->getLInt()), true);
 		foreach($this->chainData["chain"] as $chain){
 			$webtoken = Utils::decodeJWT($chain);
 			if(isset($webtoken["extraData"])){
@@ -91,13 +94,16 @@ class LoginPacket extends DataPacket{
 				if(isset($webtoken["extraData"]["identity"])){
 					$this->clientUUID = $webtoken["extraData"]["identity"];
 				}
+				if(isset($webtoken["extraData"]["XUID"])){
+					$this->xuid = $webtoken["extraData"]["XUID"];
+				}
 				if(isset($webtoken["identityPublicKey"])){
 					$this->identityPublicKey = $webtoken["identityPublicKey"];
 				}
 			}
 		}
 
-		$this->clientDataJwt = $buffer->get($buffer->getLInt());
+		$this->clientDataJwt = $this->get($this->getLInt());
 		$this->clientData = Utils::decodeJWT($this->clientDataJwt);
 
 		$this->clientId = $this->clientData["ClientRandomId"] ?? null;
@@ -106,6 +112,30 @@ class LoginPacket extends DataPacket{
 
 		if(isset($this->clientData["SkinData"])){
 			$this->skin = base64_decode($this->clientData["SkinData"]);
+		} 
+		if(isset($this->clientData["DeviceModel"])){
+			$this->deviceModel = $this->clientData["DeviceModel"];
+		}
+		if(isset($this->playerData["DeviceOS"])) {
+			$this->deviceOS = $this->playerData["DeviceOS"];
+		}
+		if(isset($this->playerData["SkinGeometryName"])){
+			$this->skinGeometryName = $this->playerData["SkinGeometryName"];    
+		}
+		if(isset($this->playerData["SkinGeometry"])){
+			$this->skinGeometryData = base64_decode($this->playerData["SkinGeometry"]);  
+		}
+		if(isset($this->playerData["UIProfile"])){
+			$this->ui = $this->playerData["UIProfile"];
+		}
+		if(isset($this->playerData["LanguageCode"])){
+			$this->languageCode = $this->playerData["LanguageCode"];
+		}
+		if(isset($this->playerData["GameVersion"])){
+			$this->clientVersion = $this->playerData["GameVersion"];
+		}
+		if(isset($this->playerData["CapeData"])){
+			$this->capeData = base64_decode($this->playerData["CapeData"]);
 		}
 	}
 

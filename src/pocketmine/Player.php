@@ -259,6 +259,16 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	/** @var Vector3|null */
 	protected $sleeping = null;
 	protected $clientID = null;
+	protected $deviceModel;
+	protected $deviceOS;
+	protected $ui = -1;
+	protected $xuid = "";
+
+	protected $languageCode;
+	protected $clientVersion;
+	protected $skinGeometryName;
+	protected $skinGeometryData;
+	protected $capeData;
 
 	private $loaderId = 0;
 
@@ -332,6 +342,42 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 	public function getClientSecret(){
 		return $this->clientSecret;
+	}
+
+	public function getDeviceOS(){
+		return $this->deviceOS;
+	}
+
+	public function getDeviceModel(){
+		return $this->deviceModel;
+	}
+
+	public function getUI(){
+		return $this->ui;
+	}
+
+	public function getXUID(){
+		return $this->xuid;
+	}
+
+	public function getLanguageCode(){
+		return $this->languageCode;
+	}
+
+	public function getClientVersion(){
+		return $this->clientVersion;
+	}
+
+	public function getSkinGeometryName(){
+		return $this->skinGeometryName;
+	}
+
+	public function getSkinGeometryData(){
+		return $this->skinGeometryData;
+	}
+	
+	public function getCapeData(){
+		return $this->capeData;
 	}
 
 	public function isBanned() : bool{
@@ -1993,7 +2039,15 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->displayName = $this->username;
 		$this->iusername = strtolower($this->username);
 		$this->setDataProperty(self::DATA_NAMETAG, self::DATA_TYPE_STRING, $this->username, false);
-
+		$this->deviceModel = $packet->deviceModel;
+		$this->deviceOS = $packet->deviceOS;
+		$this->ui = $packet->ui;
+		$this->xuid = $packet->xuid;
+		$this->languageCode = $packet->languageCode;
+		$this->clientVersion = $packet->clientVersion;
+		$this->skinGeometryName = $packet->skinGeometryName;
+		$this->skinGeometryData = $packet->skinGeometryData;
+		$this->capeData = $packet->capeData;
 		if(count($this->server->getOnlinePlayers()) >= $this->server->getMaxPlayers() and $this->kick("disconnectionScreen.serverFull", false)){
 			return true;
 		}
