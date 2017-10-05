@@ -111,6 +111,7 @@ use pocketmine\network\mcpe\protocol\ContainerClosePacket;
 use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\DisconnectPacket;
 use pocketmine\network\mcpe\protocol\EntityEventPacket;
+use pocketmine\network\mcpe\protocol\FullChunkDataPacket;
 use pocketmine\network\mcpe\protocol\InteractPacket;
 use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\network\mcpe\protocol\ItemFrameDropItemPacket;
@@ -160,6 +161,7 @@ use pocketmine\tile\Tile;
 use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
 use pocketmine\utils\UUID;
+use pocketmine\scheduler\CallbackTask;
 
 
 /**
@@ -901,7 +903,21 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->usedChunks[Level::chunkHash($x, $z)] = true;
 		$this->chunkLoadCount++;
 
-		$this->dataPacket($payload);
+		/*
+		$pk1 = new ChunkRadiusUpdatedPacket();
+		$pk1->radius = $this->viewDistance;
+		$this->server->getScheduler()->scheduleDelayedTask(new CallbackTask([$this, "dataPacket"], [$pk1]), 10);
+		*/
+
+		if($payload instanceof DataPacket){
+			$this->dataPacket($payload);
+		}else{
+			$pk = new FullChunkDataPacket();
+			$pk->chunkX = $x;
+			$pk->chunkZ = $z;
+			$pk->data = $payload;
+			$this->batchDataPacket($pk);
+		}
 
 		if($this->spawned){
 			foreach($this->level->getChunkEntities($x, $z) as $entity){
