@@ -109,6 +109,7 @@ use pocketmine\utils\TextFormat;
 use pocketmine\utils\Utils;
 use pocketmine\utils\UUID;
 use pocketmine\utils\VersionString;
+use pocketmine\utils\MapUtils;
 
 /**
  * The class that manages everything
@@ -271,6 +272,9 @@ class Server{
 
 	/** @var Level */
 	private $levelDefault = null;
+
+	/** @var MapUtils */
+	private $maputils;
 
 	/**
 	 * @return string
@@ -1366,6 +1370,13 @@ class Server{
 		return $this->operators;
 	}
 
+	/**
+	 * @return MapUtils
+	 */
+	 public function getMapUtils(){
+	 	return $this->maputils;
+	 }
+
 	public function reloadWhitelist(){
 		$this->whitelist->reload();
 	}
@@ -1431,6 +1442,10 @@ class Server{
 
 			if(!file_exists($pluginPath)){
 				mkdir($pluginPath, 0777);
+			}
+
+			if(!file_exists($pluginPath . "DragMine/")){
+				mkdir($pluginPath . "DragMine/", 0777);
 			}
 
 			$this->dataPath = realpath($dataPath) . DIRECTORY_SEPARATOR;
@@ -1556,6 +1571,12 @@ class Server{
 			@touch($this->dataPath . "banned-ips.txt");
 			$this->banByIP = new BanList($this->dataPath . "banned-ips.txt");
 			$this->banByIP->load();
+
+			$this->maputils = new MapUtils();
+			foreach (glob($this->dataPath . "maps/*.dat") as $mapdata){
+				$map = $this->maputils->loadFromNBT($mapdata);
+				$this->maputils->cacheMap($map);
+			}
 
 			$this->maxPlayers = $this->getConfigInt("max-players", 20);
 			$this->setAutoSave($this->getConfigBoolean("auto-save", true));
@@ -1861,7 +1882,7 @@ class Server{
 	 * @param bool         $immediate
 	 */
 	public function batchPackets(array $players, array $packets, bool $forceSync = false, bool $immediate = false){
-		Timings::$playerNetworkTimer->startTiming();
+		//Timings::$playerNetworkTimer->startTiming();
 
 		$targets = [];
 		foreach($players as $p){
@@ -1892,7 +1913,7 @@ class Server{
 			}
 		}
 
-		Timings::$playerNetworkTimer->stopTiming();
+		//Timings::$playerNetworkTimer->stopTiming();
 	}
 
 	public function broadcastPacketsCallback(BatchPacket $pk, array $identifiers, bool $immediate = false){
@@ -2046,6 +2067,10 @@ class Server{
 
 			foreach($this->players as $player){
 				$player->close($player->getLeaveMessage(), $this->getProperty("settings.shutdown-message", "Server closed"));
+			}
+
+			foreach($this->maputils->getAllCachedMaps() as $cachedMap){
+				$cachedMap->save();
 			}
 
 			$this->getLogger()->debug("Unloading all levels");
