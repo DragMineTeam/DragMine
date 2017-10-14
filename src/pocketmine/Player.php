@@ -79,6 +79,8 @@ use pocketmine\inventory\transaction\action\InventoryAction;
 use pocketmine\inventory\transaction\CraftingTransaction;
 use pocketmine\inventory\transaction\InventoryTransaction;
 use pocketmine\item\Item;
+use pocketmine\item\FilledItem;
+use pocketmine\item\FilledMap;
 use pocketmine\item\ItemFactory;
 use pocketmine\level\ChunkLoader;
 use pocketmine\level\format\Chunk;
@@ -105,6 +107,7 @@ use pocketmine\network\mcpe\protocol\BlockEntityDataPacket;
 use pocketmine\network\mcpe\protocol\BlockPickRequestPacket;
 use pocketmine\network\mcpe\protocol\BossEventPacket;
 use pocketmine\network\mcpe\protocol\ChunkRadiusUpdatedPacket;
+use pocketmine\network\mcpe\protocol\ClientboundMapItemDataPacket;
 use pocketmine\network\mcpe\protocol\ClientToServerHandshakePacket;
 use pocketmine\network\mcpe\protocol\CommandBlockUpdatePacket;
 use pocketmine\network\mcpe\protocol\ContainerClosePacket;
@@ -2992,7 +2995,20 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	}
 
 	public function handleMapInfoRequest(MapInfoRequestPacket $packet) : bool{
-		return false; //TODO
+		$path = Server::getInstance()->getDataPath() . "maps/map_" . $packet->mapId;
+		$map = Server::getInstance()->getMapUtils()->getCachedMap($packet->mapId);
+		if($map != null){
+			$map->update(ClientboundMapItemDataPacket::BITFLAG_TEXTURE_UPDATE);
+		}elseif ($packet->mapId == -1 || !file_exists($path)){
+			$map = new FilledMap($packet->mapId);
+			$map->update(ClientboundMapItemDataPacket::BITFLAG_TEXTURE_UPDATE);
+			Server::getInstance()->getMapUtils()->cacheMap($map);
+		}else{
+			$map = Server::getInstance()->getMapUtils()->loadFromNBT($packet->mapId);
+			$map->update(ClientboundMapItemDataPacket::BITFLAG_TEXTURE_UPDATE);
+			Server::getInstance()->getMapUtils()->cacheMap($map);
+		}
+		return true;
 	}
 
 	public function handleRequestChunkRadius(RequestChunkRadiusPacket $packet) : bool{

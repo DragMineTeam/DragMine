@@ -335,6 +335,10 @@ class Vector3{
 		return $this;
 	}
 
+	public static function getVector3($x, $y, $z){
+		return new Vector3($x, $y, $z);
+	}
+
 	public function __toString(){
 		return "Vector3(x=" . $this->x . ",y=" . $this->y . ",z=" . $this->z . ")";
 	}

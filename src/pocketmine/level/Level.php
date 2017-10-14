@@ -88,6 +88,7 @@ use pocketmine\tile\Container;
 use pocketmine\tile\Tile;
 use pocketmine\utils\Random;
 use pocketmine\utils\ReversePriorityQueue;
+use pocketmine\utils\MapUtils;
 
 #include <rules/Level.h>
 
@@ -991,6 +992,11 @@ class Level implements ChunkManager, Metadatable{
 		$this->saveChunks();
 		if($this->provider instanceof BaseLevelProvider){
 			$this->provider->saveLevelData();
+		}
+
+		foreach(Server::getInstance()->getMapUtils()->getAllCachedMaps() as $cachedMap){
+			$cachedMap->save();
+			MapUtils::exportToPNG($cachedMap);
 		}
 
 		return true;

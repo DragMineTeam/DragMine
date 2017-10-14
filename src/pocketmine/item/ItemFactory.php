@@ -139,7 +139,7 @@ class ItemFactory{
 			self::registerItem(new Bed());
 			//TODO: REPEATER
 			self::registerItem(new Cookie());
-			//TODO: FILLED_MAP
+			self::registerItem(new FilledMap());
 			self::registerItem(new Shears());
 			self::registerItem(new Melon());
 			self::registerItem(new PumpkinSeeds());
@@ -176,7 +176,7 @@ class ItemFactory{
 			self::registerItem(new Potato());
 			self::registerItem(new BakedPotato());
 			//TODO: POISONOUS_POTATO
-			//TODO: EMPTYMAP
+			self::registerItem(new EmptyMap());
 			self::registerItem(new GoldenCarrot());
 			self::registerItem(new Skull());
 			//TODO: CARROTONASTICK
