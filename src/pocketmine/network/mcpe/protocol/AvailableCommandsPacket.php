@@ -26,191 +26,140 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\utils\BinaryStream;
+use pocketmine\Server;
 
 class AvailableCommandsPacket extends DataPacket{
 	const NETWORK_ID = ProtocolInfo::AVAILABLE_COMMANDS_PACKET;
-
-
-	/**
-	 * This flag is set on all types EXCEPT the TEMPLATE type. Not completely sure what this is for, but it is required
-	 * for the argtype to work correctly. VALID seems as good a name as any.
-	 */
+	
 	const ARG_FLAG_VALID = 0x100000;
-
-	/**
-	 * Basic parameter types. These must be combined with the ARG_FLAG_VALID constant.
-	 * ARG_FLAG_VALID | (type const)
-	 */
-	const ARG_TYPE_INT      = 0x01;
-	const ARG_TYPE_FLOAT    = 0x02;
-	const ARG_TYPE_VALUE    = 0x03;
-	const ARG_TYPE_TARGET   = 0x04;
-
-	const ARG_TYPE_STRING   = 0x0d;
-	const ARG_TYPE_POSITION = 0x0e;
-
-	const ARG_TYPE_RAWTEXT  = 0x11;
-
-	const ARG_TYPE_TEXT     = 0x13;
-
-	const ARG_TYPE_JSON     = 0x16;
-
-	const ARG_TYPE_COMMAND  = 0x1d;
-
-	/**
-	 * Enums are a little different: they are composed as follows:
-	 * ARG_FLAG_ENUM | ARG_FLAG_VALID | (enum index)
-	 */
 	const ARG_FLAG_ENUM = 0x200000;
+	const ARG_TYPE_INT = 0x01;
+	const ARG_TYPE_FLOAT = 0x02;
+	const ARG_TYPE_VALUE = 0x03;
+	const ARG_TYPE_TARGET = 0x04;
+	const ARG_TYPE_STRING = 0x0d;
+	const ARG_TYPE_POSITION = 0x0e;
+	const ARG_TYPE_RAWTEXT = 0x11;
+	const ARG_TYPE_TEXT = 0x13;
+	const ARG_TYPE_JSON = 0x16;
+	const ARG_TYPE_COMMAND = 0x1d;
+
+	public $commands = [];
 
 	/**
-	 * This is used for for /xp <level: int>L.
+	 * @param string $paramName
+	 * @return int
 	 */
-	const ARG_FLAG_POSTFIX = 0x1000000;
-
-	/**
-	 * @var string[]
-	 * A list of every single enum value for every single command in the packet, including alias names.
-	 */
-	public $enumValues = [];
-	/** @var int */
-	private $enumValuesCount = 0;
-
-	/**
-	 * @var string[]
-	 * A list of argument postfixes. Used for the /xp command's <int>L.
-	 */
-	public $postfixes = [];
-
-	/**
-	 * @var array
-	 * List of enum names, along with a list of ints indicating the enum's possible values from the enumValues array.
-	 */
-	public $enums = [];
-
-	/**
-	 * @var array
-	 * List of command data, including name, description, alias indexes and parameters.
-	 */
-	public $commandData = [];
+	private static function getFlag($paramName){
+		switch($paramName){
+			case "int":
+				return self::ARG_TYPE_INT;
+			case "float":
+				return self::ARG_TYPE_FLOAT;
+			case "mixed":
+				return self::ARG_TYPE_VALUE;
+			case "target":
+				return self::ARG_TYPE_TARGET;
+			case "string":
+				return self::ARG_TYPE_STRING;
+			case "xyz":
+				return self::ARG_TYPE_POSITION;
+			case "rawtext":
+				return self::ARG_TYPE_RAWTEXT;
+			case "text":
+				return self::ARG_TYPE_TEXT;
+			case "json":
+				return self::ARG_TYPE_JSON;
+			case "command":
+				return self::ARG_TYPE_COMMAND;
+		}
+		return 0;
+	}
 
 	protected function decodePayload(){
-		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$this->enumValues[] = $this->getString();
-		}
-
-		$this->enumValuesCount = count($this->enumValues);
-
-
-		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$this->postfixes[] = $this->getString();
-		}
-
-		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$this->enums[] = $this->getEnum();
-		}
-
-		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			$this->commandData[] = $this->getCommandData();
-		}
-	}
-
-	protected function getEnum(){
-		$retval = [];
-		$retval["enumName"] = $this->getString();
-
-		$enumValues = [];
-
-		for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-			//Get the enum value from the initial pile of mess
-			$enumValues[] = $this->enumValues[$this->getEnumValueIndex()];
-		}
-
-		$retval["enumValues"] = $enumValues;
-
-		return $retval;
-	}
-
-	protected function getEnumValueIndex() : int{
-		if($this->enumValuesCount < 256){
-			return $this->getByte();
-		}elseif($this->enumValuesCount < 65536){
-			return $this->getLShort();
-		}else{
-			return $this->getLInt();
-		}
-	}
-
-	protected function getCommandData(){
-		$retval = [];
-		$retval["commandName"] = $commandName = $this->getString();
-		$retval["commandDescription"] = $this->getString();
-		$retval["byte1"] = $this->getByte();
-		$retval["byte2"] = $this->getByte();
-		$retval["aliasesEnum"] = $this->enums[$this->getLInt()] ?? null;
-
-		for($i = 0, $overloadCount = $this->getUnsignedVarInt(); $i < $overloadCount; ++$i){
-			for($j = 0, $paramCount = $this->getUnsignedVarInt(); $j < $paramCount; ++$j){
-				$retval["overloads"][$i]["params"][$j]["paramName"] = $this->getString();
-				$retval["overloads"][$i]["params"][$j]["paramType"] = $type = $this->getLInt();
-				$retval["overloads"][$i]["params"][$j]["optional"] = $this->getBool();
-				if($type & self::ARG_FLAG_ENUM){
-					$index = ($type & 0xffff);
-					if(isset($this->enums[$index])){
-						$retval["overloads"][$i]["params"][$j]["enum"] = $this->enums[$index];
-					}else{
-						$retval["overloads"][$i]["params"][$j]["enum"] = null;
-					}
-				}
-				$retval["overloads"][$i]["params"][$j]["paramTypeString"] = $this->argTypeToString($type);
-			}
-		}
-
-		return $retval;
-	}
-
-	private function argTypeToString(int $argtype) : string{
-		if($argtype & self::ARG_FLAG_VALID){
-			if($argtype & self::ARG_FLAG_ENUM){
-				return "stringenum (" . ($argtype & 0xffff) . ")";
-			}
-
-			switch($argtype & 0xffff){
-				case self::ARG_TYPE_INT:
-					return "int";
-				case self::ARG_TYPE_FLOAT:
-					return "float";
-				case self::ARG_TYPE_VALUE:
-					return "mixed";
-				case self::ARG_TYPE_TARGET:
-					return "target";
-				case self::ARG_TYPE_STRING:
-					return "string";
-				case self::ARG_TYPE_POSITION:
-					return "xyz";
-				case self::ARG_TYPE_RAWTEXT:
-					return "rawtext";
-				case self::ARG_TYPE_TEXT:
-					return "text";
-				case self::ARG_TYPE_JSON:
-					return "json";
-				case self::ARG_TYPE_COMMAND:
-					return "command";
-			}
-		}elseif($argtype !== 0){
-			//guessed
-			$baseType = $argtype >> 24;
-			$typeName = $this->argTypeToString(self::ARG_FLAG_VALID | $baseType);
-			$postfix = $this->postfixes[$argtype & 0xffff];
-
-			return $typeName . " (postfix $postfix)";
-		}
-
-		return "unknown ($argtype)";
 	}
 
 	protected function encodePayload(){
-		//TODO
+		$enumValues = [];
+		$enumValuesCount = 0;
+		$enumAdditional = [];
+		$enums = [];
+		$commandsStream = new BinaryStream();
+		foreach($this->commands as $commandName => $commandData){
+			if($commandName === "help"){
+				continue;
+			}
+			$commandsStream->putString($commandName);
+			$description = $commandData["versions"][0]["description"];
+			if(substr($description, 0, 1) === "%"){
+				$description = Server::getInstance()->getLanguage()->translateString(substr($description, 1));
+			}
+			$commandsStream->putString($description);
+			$commandsStream->putByte(0);
+			$commandsStream->putByte(0);
+			if(isset($commandData["versions"][0]["aliases"]) && !empty($commandData["versions"][0]["aliases"])){
+				$aliases = [];
+				foreach($commandData["versions"][0]["aliases"] as $alias){
+					if (!isset($enumAdditional[$alias])) {
+						$enumValues[$enumValuesCount] = $alias;
+						$enumAdditional[$alias] = $enumValuesCount;
+						$targetIndex = $enumValuesCount;
+						$enumValuesCount++;
+					}else{
+						$targetIndex = $enumAdditional[$alias];
+					}
+					$aliases[] = $targetIndex;
+				}
+				$enums[] = [
+					"name" => $commandName . "CommandAliases",
+					"data" => $aliases,
+				];
+				$aliasesEnumId = count($enums) - 1;
+			}else{
+				$aliasesEnumId = -1;
+			}
+			$commandsStream->putLInt($aliasesEnumId);
+			$commandsStream->putUnsignedVarInt(count($commandData["versions"][0]["overloads"])); // overloads
+			foreach($commandData["versions"][0]["overloads"] as $overloadData){
+				$commandsStream->putUnsignedVarInt(count($overloadData["input"]["parameters"]));
+				$paramNum = count($overloadData["input"]["parameters"]);
+				foreach ($overloadData["input"]["parameters"] as $paramData) {
+					$commandsStream->putString($paramData["name"]);
+					$isParamOneAndOptional = ($paramNum == 1 && isset($paramData["optional"]) && $paramData["optional"]);
+					if($paramData["type"] == "rawtext" && ($paramNum > 1 || $isParamOneAndOptional)){
+						$commandsStream->putLInt(self::ARG_FLAG_VALID | self::getFlag("string"));
+					}else{
+						$commandsStream->putLInt(self::ARG_FLAG_VALID | self::getFlag($paramData["type"]));
+					}
+					$commandsStream->putBool(isset($paramData["optional"]) && $paramData["optional"]);
+				}
+			}
+		}
+		$this->putUnsignedVarInt($enumValuesCount);
+		for($i = 0; $i < $enumValuesCount; $i++){
+			$this->putString($enumValues[$i]);
+		}
+		$this->putUnsignedVarInt(0);
+		$enumsCount = count($enums);
+		$this->putUnsignedVarInt($enumsCount);
+		for($i = 0; $i < $enumsCount; $i++){
+			$this->putString($enums[$i]["name"]);
+			$dataCount = count($enums[$i]["data"]);
+			$this->putUnsignedVarInt($dataCount);
+			for($j = 0; $j < $dataCount; $j++){
+				if($enumValuesCount < 256){
+					$this->putByte($enums[$i]["data"][$j]);
+				}elseif($enumValuesCount < 65536){
+					$this->putLShort($enums[$i]["data"][$j]);
+				}else{
+					$this->putLInt($enums[$i]["data"][$j]);
+				}	
+			}
+		}
+		
+		$this->putUnsignedVarInt(count($this->commands));
+		$this->put($commandsStream->buffer);
 	}
 
 	public function handle(NetworkSession $session) : bool{
