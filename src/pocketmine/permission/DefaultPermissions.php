@@ -127,6 +127,9 @@ abstract class DefaultPermissions{
 		self::registerPermission(new Permission(self::ROOT . ".command.setworldspawn", "Allows the user to change the world spawn", Permission::DEFAULT_OP), $commands);
 		self::registerPermission(new Permission(self::ROOT . ".command.transferserver", "Allows the user to transfer self to another server", Permission::DEFAULT_OP), $commands);
 		self::registerPermission(new Permission(self::ROOT . ".command.title", "Allows the user to send a title to the specified player", Permission::DEFAULT_OP), $commands);
+		self::registerPermission(new Permission(self::ROOT . ".command.extractplugin", "Allows the user to extract plugin to the specified player", Permission::DEFAULT_OP), $commands);
+		self::registerPermission(new Permission(self::ROOT . ".command.makeplugin", "Allows the user to create a phar plugin from folder plugin to the specified player", Permission::DEFAULT_OP), $commands);
+		self::registerPermission(new Permission(self::ROOT . ".command.makeserver", "Allows the user to create a phar from source to the specified player", Permission::DEFAULT_OP), $commands);
 
 		$commands->recalculatePermissibles();
 
