@@ -242,6 +242,10 @@ class MapUtils {
 		return $map;
 	}
 
+	public function getBaseMapColors(){
+		return self::$BaseMapColors;
+	}
+
 	public static function getBlockColor(Block $block) {
 		$meta = $block->getDamage();
 		switch ($id = $block->getId()) {
