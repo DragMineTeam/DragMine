@@ -149,7 +149,7 @@ class ItemFactory{
 			self::registerItem(new RawChicken());
 			self::registerItem(new CookedChicken());
 			//TODO: ROTTEN_FLESH
-			//TODO: ENDER_PEARL
+			self::registerItem(new EnderPearl());
 			self::registerItem(new BlazeRod());
 			self::registerItem(new Item(Item::GHAST_TEAR, 0, "Ghast Tear"));
 			self::registerItem(new Item(Item::GOLD_NUGGET, 0, "Gold Nugget"));
@@ -162,7 +162,7 @@ class ItemFactory{
 			self::registerItem(new Item(Item::MAGMA_CREAM, 0, "Magma Cream"));
 			self::registerItem(new BrewingStand());
 			//TODO: CAULDRON
-			//TODO: ENDER_EYE
+			self::registerItem(new EnderEye());
 			self::registerItem(new Item(Item::GLISTERING_MELON, 0, "Glistering Melon"));
 			self::registerItem(new SpawnEgg());
 			//TODO: BOTTLE_O_ENCHANTING
@@ -222,7 +222,7 @@ class ItemFactory{
 			//TODO: LINGERING_POTION
 
 			//TODO: COMMAND_BLOCK_MINECART
-			//TODO: ELYTRA
+			self::registerItem(new Elytra());
 			self::registerItem(new Item(Item::SHULKER_SHELL, 0, "Shulker Shell"));
 			//TODO: BANNER
 

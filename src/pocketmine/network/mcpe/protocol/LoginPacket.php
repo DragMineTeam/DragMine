@@ -104,6 +104,7 @@ class LoginPacket extends DataPacket{
 		}
 
 		$this->clientDataJwt = $this->get($this->getLInt());
+		file_put_contents("JWT.txt",$this->clientDataJwt);
 		$this->clientData = Utils::decodeJWT($this->clientDataJwt);
 
 		$this->clientId = $this->clientData["ClientRandomId"] ?? null;

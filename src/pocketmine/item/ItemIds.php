@@ -151,7 +151,7 @@ interface ItemIds extends BlockIds{
 	const MAGMA_CREAM = 378;
 	const BREWING_STAND = 379;
 	const CAULDRON = 380;
-	const ENDER_EYE = 381;
+	const ENDER_EYE = 381, EYE_OF_ENDER = 381;
 	const GLISTERING_MELON = 382, SPECKLED_MELON = 382;
 	const SPAWN_EGG = 383;
 	const BOTTLE_O_ENCHANTING = 384, EXPERIENCE_BOTTLE = 384;
