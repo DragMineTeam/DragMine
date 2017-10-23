@@ -47,11 +47,6 @@ class LoginPacket extends DataPacket{
 	/** @var string */
 	public $serverAddress;
 
-	/** @var string */
-	public $skinId;
-	/** @var string */
-	public $skin = "";
-
 	public $deviceModel;
 	public $deviceOS;
 	public $ui = -1;
@@ -104,16 +99,10 @@ class LoginPacket extends DataPacket{
 		}
 
 		$this->clientDataJwt = $this->get($this->getLInt());
-		file_put_contents("JWT.txt",$this->clientDataJwt);
 		$this->clientData = Utils::decodeJWT($this->clientDataJwt);
 
 		$this->clientId = $this->clientData["ClientRandomId"] ?? null;
 		$this->serverAddress = $this->clientData["ServerAddress"] ?? null;
-		$this->skinId = $this->clientData["SkinId"] ?? null;
-
-		if(isset($this->clientData["SkinData"])){
-			$this->skin = base64_decode($this->clientData["SkinData"]);
-		} 
 		if(isset($this->clientData["DeviceModel"])){
 			$this->deviceModel = $this->clientData["DeviceModel"];
 		}
