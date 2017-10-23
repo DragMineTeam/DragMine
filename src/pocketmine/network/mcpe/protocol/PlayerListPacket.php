@@ -80,11 +80,11 @@ class PlayerListPacket extends DataPacket{
 				$this->putUUID($entry->uuid);
 				$this->putEntityUniqueId($entry->entityUniqueId);
 				$this->putString($entry->username);
-+				$this->putString($entry->skin->getSkinId());
- +				$this->putString($entry->skin->getSkinData());
- +				$this->putString($entry->skin->getCapeData());
- +				$this->putString($entry->skin->getGeometryName());
- +				$this->putString($entry->skin->getGeometryData());
+				$this->putString($entry->skin->getSkinId());
+				$this->putString($entry->skin->getSkinData());
+				$this->putString($entry->skin->getCapeData());
+				$this->putString($entry->skin->getGeometryName());
+				$this->putString($entry->skin->getGeometryData());
 				$this->putString($entry->xboxUserId);
 			}else{
 				$this->putUUID($entry->uuid);
