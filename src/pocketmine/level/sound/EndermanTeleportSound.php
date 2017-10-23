@@ -27,7 +27,7 @@ use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\LevelEventPacket;
 
 class EndermanTeleportSound extends GenericSound{
-	public function __construct(Vector3 $pos){
-		parent::__construct($pos, LevelEventPacket::EVENT_SOUND_ENDERMAN_TELEPORT);
+	public function __construct(Vector3 $pos, $pitch = 0){
+		parent::__construct($pos, LevelEventPacket::EVENT_SOUND_ENDERMAN_TELEPORT, $pitch);
 	}
 }

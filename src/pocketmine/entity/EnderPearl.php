@@ -73,7 +73,7 @@ class EnderPearl extends Projectile{
 
 	public function kill(){
 		if($this->getSpawner() instanceof Player and $this->y > 0){
-			$this->level->addSound(new EndermanTeleportSound($this));
+			$this->level->addSound(new EndermanTeleportSound($this->asPosition()));
 			$this->getSpawner()->teleport($this->asPosition());
 			if($this->getSpawner()->isSurvival()){
 				$this->getSpawner()->attack(new EntityDamageEvent($this->getSpawner(), EntityDamageEvent::CAUSE_FALL, 5));

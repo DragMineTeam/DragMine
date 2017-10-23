@@ -519,7 +519,10 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 		if(isset($this->namedtag->Skin) and $this->namedtag->Skin instanceof CompoundTag){
 			$this->setSkin(new Skin(
 				$this->namedtag->Skin["Name"],
-				$this->namedtag->Skin["Data"]
+				$this->namedtag->Skin["Data"],
+				$this->namedtag->Skin["capeData"],
+				$this->namedtag->Skin["geometryName"],
+				$this->namedtag->Skin["geometryData"]
 			));
 		}
 
@@ -702,8 +705,11 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 
 		if($this->skin !== null){
 			$this->namedtag->Skin = new CompoundTag("Skin", [
-				new StringTag("Data", $this->skin->getSkinData()),
-				new StringTag("Name", $this->skin->getSkinId())
+				"Data" => new StringTag("Data", $this->skin->getSkinData()),
+				"Name" => new StringTag("Name", $this->skin->getSkinId()),
+				"capeData" => new StringTag("capeData", $this->skin->getCapeData()),
+				"geometryName" => new StringTag("geometryName", $this->skin->getGeometryName()),
+				"geometryData" => new StringTag("geometryData", $this->skin->getGeometryData())
 			]);
 		}
 	}
@@ -712,7 +718,7 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 		if($player !== $this and !isset($this->hasSpawned[$player->getLoaderId()])){
 			$this->hasSpawned[$player->getLoaderId()] = $player;
 
-			if(!$this->skin->isValidSkin($this->skin)){
+			if(!$this->skin->isValid()){
 				throw new \InvalidStateException((new \ReflectionClass($this))->getShortName() . " must have a valid skin set");
 			}
 
