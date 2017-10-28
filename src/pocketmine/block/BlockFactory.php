@@ -273,7 +273,7 @@ class BlockFactory{
 			//TODO: PURPUR_STAIRS
 
 			//TODO: UNDYED_SHULKER_BOX
-			//TODO: END_BRICKS
+			self::registerBlock(new EndStoneBricks());
 			//TODO: FROSTED_ICE
 			self::registerBlock(new EndRod());
 			//TODO: END_GATEWAY
@@ -375,7 +375,8 @@ class BlockFactory{
 	 * @return Block
 	 */
 	public static function get(int $id, int $meta = 0, Position $pos = null) : Block{
-		if($meta < 0 or $meta > 0xf){
+		//if($meta < 0 or $meta > 0xf){
+		if($meta < 0){
 			throw new \InvalidArgumentException("Block meta value $meta is out of bounds");
 		}
 
