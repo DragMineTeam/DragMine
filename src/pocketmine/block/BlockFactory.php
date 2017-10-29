@@ -191,7 +191,7 @@ class BlockFactory{
 			//TODO: END_PORTAL
 			self::registerBlock(new EndPortalFrame());
 			self::registerBlock(new EndStone());
-			//TODO: DRAGON_EGG
+			self::registerBlock(new DragonEgg());
 			self::registerBlock(new RedstoneLamp());
 			self::registerBlock(new LitRedstoneLamp());
 			//TODO: DROPPER
