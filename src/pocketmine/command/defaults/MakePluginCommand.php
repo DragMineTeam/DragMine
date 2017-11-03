@@ -78,10 +78,11 @@ class MakePluginCommand extends VanillaCommand {
 			return true;
 		}
 
-		$pharPath = Server::getInstance()->getPluginPath() . DIRECTORY_SEPARATOR . "DragMine" . DIRECTORY_SEPARATOR . $description->getName() . "_v" . $description->getVersion() . ".phar";
+		$pharPath = Server::getInstance()->getPluginPath()  . "DragMine" . DIRECTORY_SEPARATOR . $description->getName() . "_v" . $description->getVersion() . ".phar";
 		if(file_exists($pharPath)){
 			$sender->sendMessage("[DragMine]Phar plugin already exists, overwriting...");
-			@unlink($pharPath);
+			\Phar::unlinkArchive($pharPath);
+			//unlink($pharPath);
 		}
 		$sender->sendMessage("[DragMine]Adding files...");
 		$phar = new \Phar($pharPath);
