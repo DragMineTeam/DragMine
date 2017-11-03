@@ -48,7 +48,7 @@ class MakeServerCommand extends VanillaCommand{
 		}
 
 		$server = $sender->getServer();
-		$pharPath = Server::getInstance()->getPluginPath() . DIRECTORY_SEPARATOR . "DragMine" . DIRECTORY_SEPARATOR . $server->getName() . "_" . $server->getPocketMineVersion() . ".phar";
+		$pharPath = Server::getInstance()->getPluginPath()  . "DragMine" . DIRECTORY_SEPARATOR . $server->getName() . "_" . $server->getPocketMineVersion() . ".phar";
 		if(file_exists($pharPath)){
 			$sender->sendMessage("[DragMine]Phar file already exists, overwriting...");
 			\Phar::unlinkArchive($pharPath);

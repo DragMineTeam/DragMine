@@ -82,7 +82,6 @@ class MakePluginCommand extends VanillaCommand {
 		if(file_exists($pharPath)){
 			$sender->sendMessage("[DragMine]Phar plugin already exists, overwriting...");
 			\Phar::unlinkArchive($pharPath);
-			//unlink($pharPath);
 		}
 		$sender->sendMessage("[DragMine]Adding files...");
 		$phar = new \Phar($pharPath);
