@@ -31,11 +31,16 @@ class MapCreateTask extends AsyncTask{
 		for($i=1;$i<self::$size;$i++){
 			$size *= 2;
 		}
-		for($x=$vec->x+($size/2);$x>=$vec->x-($size/2);$x--){
-			for($z=$vec->z+($size/2);$z>=$vec->z-($size/2);$z--){
+		$xx = $size;
+		$zz = $size;
+		for($x=$vec->x+($size/2);$x>=$vec->x-($size/2);$x--, $xx--){
+			for($z=$vec->z+($size/2);$z>=$vec->z-($size/2);$z--, $zz--){
+				if($zz < 0){
+					$zz = $size;
+				}
 				for($y=256;$y>=0;$y--){
 					// TODO
-					$result[$z+($size/2)][$x+($size/2)] = Color::getRGB(mt_rand(0,255), mt_rand(0,255), mt_rand(0,255));
+					$result[$zz][$xx] = Color::getRGB(mt_rand(0,255), mt_rand(0,255), mt_rand(0,255));
 					break;
 				}
 			}
