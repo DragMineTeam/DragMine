@@ -253,8 +253,8 @@ class MapUtils {
 			case Block::SANDSTONE:
 			case Block::SANDSTONE_STAIRS:
 			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::SANDSTONE:
-			case Block::DOUBLE_SLAB && $meta == StoneSlab::SANDSTONE:
-			case Block::GLOWSTONE_BLOCK:
+			case Block::DOUBLE_STONE_SLAB && $meta == StoneSlab::SANDSTONE:
+			case Block::GLOWSTONE:
 			case Block::END_STONE:
 			case Block::PLANKS && $meta == Planks::BIRCH:
 			case Block::LOG && $meta == Planks::BIRCH:

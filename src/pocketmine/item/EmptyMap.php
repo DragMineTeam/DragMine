@@ -23,10 +23,14 @@ namespace pocketmine\item;
 
 use pocketmine\math\Vector3;
 use pocketmine\utils\MapUtils;
+use pocketmine\utils\Color;
 use pocketmine\Player;
 use pocketmine\Server;
 use pocketmine\item\map\MapCreateTask;
 use pocketmine\scheduler\AsyncTask;
+use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\nbt\tag\StringTag;
+use pocketmine\network\mcpe\protocol\ClientboundMapItemDataPacket;
 
 class EmptyMap extends Item{
 
@@ -40,7 +44,46 @@ class EmptyMap extends Item{
 	public function onClickAir(Player $player, Vector3 $directionVector) : bool{
 		$id = MapUtils::getNewId();
 		$vec = new Vector3($player->x, $player->y, $player->z);
-		Server::getInstance()->getScheduler()->scheduleAsyncTask(new MapCreateTask($id, $vec, $player, $this->size, $player->getLevel()));
+		$async = true;
+		if($async){
+			//Unfinished
+			Server::getInstance()->getScheduler()->scheduleAsyncTask(new MapCreateTask($id, $vec, $player, $this->size, $player->getLevel()));
+		}else{
+			//Too many lags (Use AsyncTask in the future.)
+			$result = [];
+			$size = 128;
+			for($i=1;$i<$this->size;$i++){
+				$size *= 2;
+			}
+			$xx = $size;
+			$zz = $size;
+			for($x=$vec->x+($size/2);$x>=$vec->x-($size/2);$x--, $xx--){
+				for($z=$vec->z+($size/2);$z>=$vec->z-($size/2);$z--, $zz--){
+					if($zz < 0){
+						$zz = $size;
+					}
+					for($y=256;$y>=0;$y--){
+						$block = $player->getLevel()->getBlock(new Vector3($x, $y, $z));
+						if($block->getID() == 0){ //Air
+							if($y == 0){
+								$result[$zz][$xx] = MapUtils::getBlockColor($block);
+							}else{
+								continue;
+							}
+						}
+						$result[$zz][$xx] = MapUtils::getBlockColor($block);
+						break;
+					}
+				}
+			}
+			$map = new FilledMap($id, $result, $this->size, $size, $size);
+			$tag = new CompoundTag("", []);
+			$tag->map_uuid = new StringTag("map_uuid", (string)$id);
+			$map->setCompoundTag($tag);
+			$player->getInventory()->addItem($map);
+			$map->update(ClientboundMapItemDataPacket::BITFLAG_TEXTURE_UPDATE);
+			Server::getInstance()->getMapUtils()->cacheMap($map);
+		}
 		return true;
 	}
 }
