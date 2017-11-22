@@ -150,9 +150,7 @@ class MapUtils {
 
 	//TODO : 
 	public static function exportToPDF(Map $map){
-		if (!extension_loaded("gd")) {
-			Server::getInstance()->getLogger()->error("Unable to find the gd extension, can't create PNG image from Map");
-			Server::getInstance()->getLogger()->notice("Loaded Extensions : " . implode(",", get_loaded_extensions()));
+		if (!extension_loaded("gd")){
 			return false;
 		}
 		@mkdir(Server::getInstance()->getDataPath()."maps");
@@ -174,9 +172,7 @@ class MapUtils {
 
 	public static function exportToPNG(Map $map){
 		if (!extension_loaded("gd")){
-			Server::getInstance()->getLogger()->error("Unable to find the gd extension, can't create PNG image from Map");
-			Server::getInstance()->getLogger()->notice("Loaded Extensions : " . implode(",", get_loaded_extensions()));
-			return;
+			return false;
 		}
 		@mkdir(Server::getInstance()->getDataPath()."maps");
 		$filename = Server::getInstance()->getDataPath()."maps/map_".$map->getMapId().".png";
