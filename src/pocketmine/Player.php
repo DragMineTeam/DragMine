@@ -1925,8 +1925,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			}
 		}
 
-		$this->namedtag = $this->server->getOfflinePlayerData($this->username);
-
+		if($this->server->getDragMineOption("player.manage-xuid")){
+			$this->namedtag = $this->server->getOfflinePlayerData($this->xuid);
+		}else{
+			$this->namedtag = $this->server->getOfflinePlayerData($this->username);
+		}
 		$this->playedBefore = ($this->namedtag["lastPlayed"] - $this->namedtag["firstPlayed"]) > 1; // microtime(true) - microtime(true) may have less than one millisecond difference
 		if(!isset($this->namedtag->NameTag)){
 			$this->namedtag->NameTag = new StringTag("NameTag", $this->username);
@@ -1960,7 +1963,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 		$this->namedtag->lastPlayed = new LongTag("lastPlayed", (int) floor(microtime(true) * 1000));
 		if($this->server->getAutoSave()){
-			$this->server->saveOfflinePlayerData($this->username, $this->namedtag, true);
+			if($this->server->getDragMineOption("player.manage-xuid")){
+				$this->server->saveOfflinePlayerData($this->xuid, $this->namedtag, true);
+			}else{
+				$this->server->saveOfflinePlayerData($this->username, $this->namedtag, true);
+			}
 		}
 
 		$this->sendPlayStatus(PlayStatusPacket::LOGIN_SUCCESS);
@@ -3520,7 +3527,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->namedtag["lastPlayed"] = (int) floor(microtime(true) * 1000);
 
 		if($this->username != "" and $this->namedtag instanceof CompoundTag){
-			$this->server->saveOfflinePlayerData($this->username, $this->namedtag, $async);
+			if($this->server->getDragMineOption("player.manage-xuid")){
+				$this->server->saveOfflinePlayerData($this->xuid, $this->namedtag, $async);
+			}else{
+				$this->server->saveOfflinePlayerData($this->username, $this->namedtag, $async);
+			}
 		}
 	}
 
