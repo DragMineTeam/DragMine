@@ -357,7 +357,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		return $this->ui;
 	}
 
-	public function getXUID(){
+	public function getXuid(){
 		return $this->xuid;
 	}
 
