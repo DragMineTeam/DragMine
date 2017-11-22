@@ -73,8 +73,17 @@ class LoginPacket extends DataPacket{
 		$this->protocol = $this->getInt();
 
 		if($this->protocol !== ProtocolInfo::CURRENT_PROTOCOL){
-			$this->buffer = null;
-			return; //Do not attempt to decode for non-accepted protocols
+			$valid = false;
+			foreach(ProtocolInfo::MULTI_PROTOCOLS as $protocol){
+				if($this->protocol == $protocol){
+					$valid = true;
+					break;
+				}
+			}
+			if(!$valid){
+				$this->buffer = null;
+				return;
+			}
 		}
 
 		$this->setBuffer($this->getString(), 0);
