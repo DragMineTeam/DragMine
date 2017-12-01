@@ -31,6 +31,9 @@ use pocketmine\Player;
 use pocketmine\math\Vector3;
 
 use pocketmine\level\Level;
+use pocketmine\level\Position;
+
+use pocketmine\level\particle\PortalParticle;
 
 class DragonEgg extends Fallable{
 
@@ -58,10 +61,11 @@ class DragonEgg extends Fallable{
 
 	public function onActivate(Item $item, Player $player = null) : bool{
 		$teleport = false;
+		$pos = clone $this;
 		do{
-			$newx = mt_rand($this->x - 16,$this->x + 16);
-			$newy = mt_rand($this->y, $this->y + 3);
-			$newz = mt_rand($this->z - 16, $this->z + 16);
+			$newx = mt_rand($this->x - 15,$this->x + 15);
+			$newy = mt_rand($this->y, $this->y + 7);
+			$newz = mt_rand($this->z - 15, $this->z + 15);
 			$newId = $this->getLevel()->getBlock(new Vector3($newx, $newy, $newz))->getID();
 			switch($newId){
 				case 0:
@@ -75,6 +79,15 @@ class DragonEgg extends Fallable{
 					break;
 			}
 		}while(!$teleport);
+		$distance = $pos->distance(new Position($newx, $newy, $newz, $this->getLevel()));
+		$posdistance = new Position($newx - $pos->x, $newy - $pos->y, $newz - $pos->z, $this->getLevel());
+		for($i = 0; $i <= $distance; $i++){
+			$progress = $i / $distance;
+			$this->getLevel()->addParticle(new PortalParticle(new Position($pos->x + $posdistance->x * $progress + 0.5, 1.62 + $pos->y + $posdistance->y * $progress, $pos->z + $posdistance->z * $progress + 0.5, $this->getLevel()), 2010));
+			$this->getLevel()->addParticle(new PortalParticle(new Position($pos->x + $posdistance->x * $progress + 0.5, 1.62 + $pos->y + $posdistance->y * $progress, $pos->z + $posdistance->z * $progress - 0.5, $this->getLevel()), 2010));
+			$this->getLevel()->addParticle(new PortalParticle(new Position($pos->x + $posdistance->x * $progress - 0.5, 1.62 + $pos->y + $posdistance->y * $progress, $pos->z + $posdistance->z * $progress + 0.5, $this->getLevel()), 2010));
+			$this->getLevel()->addParticle(new PortalParticle(new Position($pos->x + $posdistance->x * $progress - 0.5, 1.62 + $pos->y + $posdistance->y * $progress, $pos->z + $posdistance->z * $progress - 0.5, $this->getLevel()), 2010));
+		}
 		return true;
 	}
 }
