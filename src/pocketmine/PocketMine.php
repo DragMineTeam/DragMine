@@ -80,7 +80,7 @@ namespace pocketmine {
 	use raklib\RakLib;
 
 	const NAME = "DragMine";
-	const VERSION = "1.1dev";
+	const VERSION = "1.2dev";
 	const API_VERSION = "3.0.0-ALPHA9";
 	const CODENAME = "DragonBreath";
 
