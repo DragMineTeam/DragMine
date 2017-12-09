@@ -164,6 +164,13 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		$this->server->handlePacket($address, $port, $payload);
 	}
 
+	public function handlePing($identifier, $ping){
+		if(isset($this->players[$identifier])){
+			$player = $this->players[$identifier];
+			$player->setPing($ping);
+		}
+	}
+
 	public function sendRawPacket(string $address, int $port, string $payload){
 		$this->interface->sendRaw($address, $port, $payload);
 	}

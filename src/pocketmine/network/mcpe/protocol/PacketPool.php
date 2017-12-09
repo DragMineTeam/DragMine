@@ -138,6 +138,7 @@ class PacketPool{
 		static::registerPacket(new SetDefaultGameTypePacket());
 
 		static::registerPacket(new BatchPacket());
+		static::registerPacket(new PingPacket());
 	}
 
 	/**

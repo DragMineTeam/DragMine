@@ -79,6 +79,7 @@ use pocketmine\network\mcpe\protocol\MoveEntityPacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 use pocketmine\network\mcpe\protocol\NpcRequestPacket;
 use pocketmine\network\mcpe\protocol\PhotoTransferPacket;
+use pocketmine\network\mcpe\protocol\PingPacket;
 use pocketmine\network\mcpe\protocol\PlaySoundPacket;
 use pocketmine\network\mcpe\protocol\PlayStatusPacket;
 use pocketmine\network\mcpe\protocol\PlayerActionPacket;
@@ -554,4 +555,7 @@ abstract class NetworkSession{
 		return false;
 	}
 
+	public function handlePing(PingPacket $packet) : bool{
+		return false;
+	}
 }

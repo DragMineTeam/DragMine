@@ -271,6 +271,8 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $skinGeometryData;
 	protected $capeData;
 
+	protected $ping;
+
 	private $loaderId = 0;
 
 	protected $stepHeight = 0.6;
@@ -2904,6 +2906,12 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		return true;
 	}
 
+	public function handlePing(PingPacket $packet) : bool{
+		$this->setPing($packet->ping);
+		echo "handlePing";
+		return true;
+	}
+
 	/**
 	 * Drops an item on the ground in front of the player. Returns if the item drop was successful.
 	 *
@@ -3940,6 +3948,14 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 	public function removeMetadata(string $metadataKey, Plugin $owningPlugin){
 		$this->server->getPlayerMetadata()->removeMetadata($this, $metadataKey, $owningPlugin);
+	}
+
+	public function setPing(int $ping){
+		$this->ping = $ping;
+	}
+
+	public function getPing() : int{
+		return $this->ping;
 	}
 
 	public function onChunkChanged(Chunk $chunk){
