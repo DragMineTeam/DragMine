@@ -143,7 +143,7 @@ class ServerHandler{
 				$offset += $len;
 				$len = ord($packet{$offset++});
 				$ping = substr($packet, $offset, $len);
-				$this->instance->handlePing($identifier, $ping);
+				$this->instance->handlePing($identifier, (int)$ping);
 			}
 			return true;
 		}

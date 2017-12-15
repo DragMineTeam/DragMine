@@ -130,6 +130,7 @@ use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\MapInfoRequestPacket;
 use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
+use pocketmine\network\mcpe\protocol\PingPacket;
 use pocketmine\network\mcpe\protocol\PlayerActionPacket;
 use pocketmine\network\mcpe\protocol\PlayerHotbarPacket;
 use pocketmine\network\mcpe\protocol\PlayerInputPacket;
@@ -271,7 +272,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	protected $skinGeometryData;
 	protected $capeData;
 
-	protected $ping;
+	protected $ping = 0;
 
 	private $loaderId = 0;
 
@@ -924,11 +925,9 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->usedChunks[Level::chunkHash($x, $z)] = true;
 		$this->chunkLoadCount++;
 
-		/*
-		$pk1 = new ChunkRadiusUpdatedPacket();
-		$pk1->radius = $this->viewDistance;
-		$this->server->getScheduler()->scheduleDelayedTask(new CallbackTask([$this, "dataPacket"], [$pk1]), 10);
-		*/
+		$pk = new ChunkRadiusUpdatedPacket();
+		$pk->radius = $this->viewDistance;
+		$this->server->getScheduler()->scheduleDelayedTask(new CallbackTask([$this, "dataPacket"], [$pk]), 10);
 
 		if($payload instanceof DataPacket){
 			$this->dataPacket($payload);
@@ -2908,7 +2907,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 	public function handlePing(PingPacket $packet) : bool{
 		$this->setPing($packet->ping);
-		echo "handlePing";
 		return true;
 	}
 
