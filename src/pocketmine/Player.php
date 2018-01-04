@@ -925,9 +925,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->usedChunks[Level::chunkHash($x, $z)] = true;
 		$this->chunkLoadCount++;
 
+		/*
 		$pk = new ChunkRadiusUpdatedPacket();
 		$pk->radius = $this->viewDistance;
 		$this->server->getScheduler()->scheduleDelayedTask(new CallbackTask([$this, "dataPacket"], [$pk]), 10);
+		*/
 
 		if($payload instanceof DataPacket){
 			$this->dataPacket($payload);
