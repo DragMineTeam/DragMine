@@ -246,6 +246,20 @@ class MapUtils {
 			case Block::SLIME_BLOCK:
 				return new Color(127, 178, 56);
 				break;
+			case Block::DIRT:
+			case Block::FARMLAND:
+			case Block::STONE && $meta == Stone::GRANITE:
+			case Block::STONE && $meta == Stone::POLISHED_GRANITE:
+			case Block::RED_SANDSTONE:
+			case Block::RED_SANDSTONE_STAIRS:
+			case Block::LOG && $meta == Planks::JUNGLE:
+			case Block::PLANKS && $meta == Planks::JUNGLE:
+			case Block::JUNGLE_FENCE_GATE:
+			case Block::FENCE && $meta == Planks::JUNGLE:
+			case Block::JUNGLE_STAIRS:
+			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::JUNGLE:
+				return new Color(151, 109, 77);
+				break;
 			case Block::BED_BLOCK:
 			case Block::COBWEB:
 			//case Block::BROWN_MUSHROOM_BLOCK://todo: stem, sides only
@@ -304,28 +318,13 @@ class MapUtils {
 			case Block::MONSTER_EGG:
 				return new Color(164, 168, 184);
 				break;
-			case Block::DIRT:
-			case Block::FARMLAND:
-			case Block::STONE && $meta == Stone::GRANITE:
-			case Block::STONE && $meta == Stone::POLISHED_GRANITE:
-			case Block::SAND && $meta == 1:
-			case Block::RED_SANDSTONE:
-			case Block::RED_SANDSTONE_STAIRS:
-			case Block::LOG && $meta == Planks::JUNGLE:
-			case Block::PLANKS && $meta == Planks::JUNGLE:
-			case Block::JUNGLE_FENCE_GATE:
-			case Block::FENCE && $meta == Planks::JUNGLE:
-			case Block::JUNGLE_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::JUNGLE:
-				return new Color(151, 109, 77);
-				break;
 			case Block::STONE:
 			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::STONE:
 			case Block::COBBLESTONE:
-			case Block::COBBLE_STAIRS:
+			case Block::COBBLESTONE_STAIRS:
 			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::COBBLESTONE:
 			case Block::COBBLESTONE_WALL:
-			case Block::MOSSY_STONE:
+			case Block::MOSSY_COBBLESTONE:
 			case Block::STONE && $meta == Stone::ANDESITE:
 			case Block::STONE && $meta == Stone::POLISHED_ANDESITE:
 			case Block::BEDROCK:
@@ -337,8 +336,7 @@ class MapUtils {
 			case Block::DROPPER:
 			case Block::STICKY_PISTON:
 			case Block::PISTON:
-			case Block::PISTON_HEAD:
-			case Block::BLOCK_MOVED_BY_PISTON:
+			case Block::PISTON_ARM_COLLISION:
 			case Block::MONSTER_SPAWNER:
 			case Block::DIAMOND_ORE:
 			case Block::FURNACE:
@@ -411,7 +409,7 @@ class MapUtils {
 			case Block::WOOL && $meta == Dye::MAGENTA:
 			case Block::CARPET && $meta == Dye::MAGENTA:
 			case Block::STAINED_HARDENED_CLAY && $meta == Dye::MAGENTA:
-			case Block::PURPUR:
+			case Block::PURPUR_BLOCK:
 			case Block::PURPUR_STAIRS:
 				return new Color(178, 76, 216);
 				break;
@@ -526,6 +524,24 @@ class MapUtils {
 			case Block::EMERALD_BLOCK:
 				return new Color(0, 217, 58);
 				break;
+			case Block::SAND:
+			case Block::SANDSTONE:
+			case Block::SANDSTONE_STAIRS:
+			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::SANDSTONE:
+			case Block::DOUBLE_STONE_SLAB && $meta == StoneSlab::SANDSTONE:
+			case Block::GLOWSTONE:
+			case Block::END_STONE:
+			case Block::PLANKS && $meta == Planks::BIRCH:
+			case Block::LOG && $meta == Planks::BIRCH:
+			case Block::BIRCH_FENCE_GATE:
+			case Block::FENCE && $meta = Planks::BIRCH:
+			case Block::BIRCH_STAIRS:
+			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::BIRCH:
+			//case Block::BROWN_MUSHROOM_BLOCK://todo: meta check for non stem inside textures
+			case Block::BONE_BLOCK:
+			case Block::END_BRICKS:
+				return new Color(247, 233, 163);
+				break;
 			case Block::PODZOL:
 			case Block::WOOD && $meta == Planks::SPRUCE:
 			case Block::PLANKS && $meta == Planks::SPRUCE:
@@ -544,24 +560,6 @@ class MapUtils {
 			case Block::NETHER_BRICK_STAIRS:
 			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::NETHER_BRICK:
 				return new Color(112, 2, 0);
-				break;
-			case Block::SAND:
-			case Block::SANDSTONE:
-			case Block::SANDSTONE_STAIRS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::SANDSTONE:
-			case Block::DOUBLE_STONE_SLAB && $meta == StoneSlab::SANDSTONE:
-			case Block::GLOWSTONE:
-			case Block::END_STONE:
-			case Block::PLANKS && $meta == Planks::BIRCH:
-			case Block::LOG && $meta == Planks::BIRCH:
-			case Block::BIRCH_FENCE_GATE:
-			case Block::FENCE && $meta = Planks::BIRCH:
-			case Block::BIRCH_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::BIRCH:
-			//case Block::BROWN_MUSHROOM_BLOCK://todo: meta check for non stem inside textures
-			case Block::BONE_BLOCK:
-			case Block::END_BRICKS:
-				return new Color(247, 233, 163);
 				break;
 			default:
 				return new Color(0, 0, 0, 0);
