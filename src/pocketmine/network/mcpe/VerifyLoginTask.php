@@ -126,7 +126,7 @@ class VerifyLoginTask extends AsyncTask{
 			return false; //token has expired
 		}
 
-		$currentPublicKey = $claims["identityPublicKey"]; //the next link should be signed with this
+		$currentPublicKey = $claims["identityPublicKey"] ?? null; //the next link should be signed with this
 
 		return true;
 	}
