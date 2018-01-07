@@ -413,7 +413,6 @@ class Session{
 					$dataPacket->decode();
 
 					if($dataPacket->port === $this->sessionManager->getPort() or !$this->sessionManager->portChecking){
-						echo "Connected from " . $dataPacket->address . " | " . $dataPacket->port;
 						$this->state = self::STATE_CONNECTED; //FINALLY!
 						$this->isTemporal = false;
 						$this->sessionManager->openSession($this);
