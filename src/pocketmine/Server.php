@@ -1538,6 +1538,19 @@ class Server{
 
 			$this->dragmineOptions = new Config($this->dataPath . "dragmine.yml", Config::YAML);
 
+			$configVersion = $this->getDragMineOption("dragmine.config-version");
+			$newopt = new Config($this->filePath . "src/pocketmine/resources/dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml", Config::YAML);
+			if($configVersion < $newopt->getNested("dragmine.config-version")){
+				$this->logger->notice("[DragMine]The version of the config does not match. Updating to the latest config");
+				unlink($this->dataPath . "dragmine.yml");
+				if(file_exists($this->filePath . "src/pocketmine/resources/dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml")){
+					$content = file_get_contents($this->filePath . "src/pocketmine/resources/dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml");
+				}else{
+					$content = file_get_contents($this->filePath . "src/pocketmine/resources/dragmine/dragmine_eng.yml");
+				}
+				@file_put_contents($this->dataPath . "dragmine.yml", $content);
+			}
+
 			if(($poolSize = $this->getProperty("settings.async-workers", "auto")) === "auto"){
 				$poolSize = ServerScheduler::$WORKERS;
 				$processors = Utils::getCoreCount() - 2;
