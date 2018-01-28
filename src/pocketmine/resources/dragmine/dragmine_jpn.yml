@@ -2,11 +2,9 @@
 
 dragmine:
  # 設定ファイルのバージョン
- config-version: 2
+ config-version: 1
 
 player:
  # プレイヤーデータをXuidで管理
  # ゲームタグを変えた際にインベントリが変更されないというメリットがあります
  manage-xuid: false
- # VPNでの接続を拒否
- vpn-guard: true

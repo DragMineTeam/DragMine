@@ -2,11 +2,9 @@
 
 dragmine:
  # Config version
- config-version: 2
+ config-version: 1
 
 player:
  # Manage player data with xuid
  # There is a merit that the inventory does not change when the game tag is changed.
  manage-xuid: false
- # Deny connection on VPN
- vpn-guard: true
