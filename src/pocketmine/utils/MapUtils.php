@@ -110,6 +110,10 @@ class MapUtils {
 		return self::$MapColors;
 	}
 
+	public function getBaseMapColors(){
+		return self::$BaseMapColors;
+	}
+
 	public static function cacheMap(Map $map){//TODO: serialize?
 		self::$cachedMaps[$map->getMapId()] = $map;
 	}
@@ -148,7 +152,6 @@ class MapUtils {
 			+ ($hsv1['s'] * sin($hsv1['h']) - $hsv2['s'] * sin($hsv2['h'])) ** 2;
 	}
 
-	//TODO : 
 	public static function exportToPDF(Map $map){
 		if (!extension_loaded("gd")){
 			return false;
