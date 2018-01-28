@@ -128,7 +128,7 @@ class FilledMap extends Item{
 	public function getColorAt(int $x, int $y){
 		if (isset($this->getColors()[$y]) && isset($this->getColors()[$y][$x]))
 			return $this->getColors()[$y][$x];
-		return Server::getMapUtils()->getBaseMapColors()[0];
+		return Server::getInstance()->getMapUtils()->getBaseMapColors()[0];
 	}
 
 	public function setColors(array $colors){
