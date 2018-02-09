@@ -28,12 +28,12 @@ namespace pocketmine\network\mcpe\protocol;
  */
 interface ProtocolInfo{
 
-	const CURRENT_PROTOCOL = 160;
-	const MULTI_PROTOCOLS = [137, 141,150,160];
+	const CURRENT_PROTOCOL = 201;
+	const MULTI_PROTOCOLS = [137, 141, 150, 160, 201];
 
-	const MINECRAFT_VERSION = "v1.2.7";
+	const MINECRAFT_VERSION = "v1.2.10";
 
-	const MINECRAFT_VERSION_NETWORK = "1.2.7";
+	const MINECRAFT_VERSION_NETWORK = "1.2.10";
 
 	const LOGIN_PACKET = 0x01;
 	const PLAY_STATUS_PACKET = 0x02;
