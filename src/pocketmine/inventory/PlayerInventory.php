@@ -122,6 +122,21 @@ class PlayerInventory extends EntityInventory{
 	}
 
 	/**
+	 * @param int $hotbarSlot
+	 * @param int $inventorySlot
+	 *
+	 * Changes the linkage of the specified hotbar slot.
+	 */
+	public function setHotbarSlotIndex($hotbarSlot, $inventorySlot){
+		if($hotbarSlot === $inventorySlot or $inventorySlot < 0){
+			return;
+		}
+		$item = $this->getItem($hotbarSlot);
+		$this->setItem($hotbarSlot, $this->getItem($inventorySlot));
+		$this->setItem($inventorySlot, $item);
+	}
+
+	/**
 	 * @deprecated
 	 * @return int
 	 */

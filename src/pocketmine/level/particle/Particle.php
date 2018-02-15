@@ -69,6 +69,9 @@ abstract class Particle extends Vector3{
 	//39 unknown
 	const TYPE_END_ROD = 40;
 	const TYPE_DRAGONS_BREATH = 41;
+	const TYPE_FIREWORKS_STARTER = 45;
+	const TYPE_FIREWORKS_SPARK = 46;
+	const TYPE_FIREWORKS_OVERLAY = 47;
 
 	/**
 	 * @return DataPacket|DataPacket[]
