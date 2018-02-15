@@ -39,25 +39,28 @@ class EnderPearl extends Projectile{
 
 	protected $gravity = 0.03;
 	protected $drag = 0.01;
-	protected $player;
+
+	private $player;
+	private $hasTeleported = false;
 
 	public function __construct(Level $level, CompoundTag $nbt, Entity $shootingEntity = null){
 		parent::__construct($level, $nbt, $shootingEntity);
-		if($shootingEntity instanceof Player) $this->setSpawner($shootingEntity);
+		if($shootingEntity instanceof Player){
+			$this->setSpawner($shootingEntity);
+		}
 	}
 
-	public function onUpdate(int $currentTick) : bool{
+	public function entityBaseTick(int $tickDiff = 1) : bool{
 		if($this->closed){
 			return false;
 		}
-		$this->timings->startTiming();
-		$hasUpdate = parent::onUpdate($currentTick);
+
+		$hasUpdate = parent::entityBaseTick($tickDiff);
 
 		if($this->age > 1200 or $this->isCollided){
-			$this->kill();
+			$this->teleportPlayer();
 			$hasUpdate = true;
 		}
-		$this->timings->stopTiming();
 
 		return $hasUpdate;
 	}
@@ -71,27 +74,30 @@ class EnderPearl extends Projectile{
 		$this->player = $player;
 	}
 
-	public function kill(){
-		if($this->getSpawner() instanceof Player and $this->y > 0){
-			$this->level->addSound(new EndermanTeleportSound($this->asPosition()));
-			$this->getSpawner()->teleport($this->asPosition());
-			if($this->getSpawner()->isSurvival()){
-				$this->getSpawner()->attack(new EntityDamageEvent($this->getSpawner(), EntityDamageEvent::CAUSE_FALL, 5));
+	public function onCollideWithEntity(Entity $entity){
+		$this->teleportPlayer();
+	}
+
+	public function teleportPlayer(){
+		if(!$this->hasTeleported){
+			$this->hasTeleported = true;
+			if(($this->getSpawner() instanceof Player) && ($this->y > 0)){
+				$this->getLevel()->addSound(new EndermanTeleportSound($this));
+				$this->getSpawner()->teleport($this->asPosition());
+				if($this->getSpawner()->isSurvival()){
+					$this->getSpawner()->attack(new EntityDamageEvent($this->getSpawner(), EntityDamageEvent::CAUSE_FALL, 4));
+				}
 			}
+			$this->kill();
 		}
-		parent::kill();
 	}
 
 	public function spawnTo(Player $player){
 		$pk = new AddEntityPacket();
 		$pk->type = self::NETWORK_ID;
 		$pk->entityRuntimeId = $this->getId();
-	
 		$pk->position = $this->asVector3();
-
-		$pk->speedX = $this->motionX;
-		$pk->speedY = $this->motionY;
-		$pk->speedZ = $this->motionZ;
+		$pk->motion = $this->getMotion();
 		$pk->metadata = $this->dataProperties;
 		$player->dataPacket($pk);
 
