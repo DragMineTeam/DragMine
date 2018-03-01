@@ -60,6 +60,7 @@ use pocketmine\event\player\PlayerJoinEvent;
 use pocketmine\event\player\PlayerJumpEvent;
 use pocketmine\event\player\PlayerKickEvent;
 use pocketmine\event\player\PlayerLoginEvent;
+use pocketmine\event\player\PlayerModalFormResponseEvent;
 use pocketmine\event\player\PlayerMoveEvent;
 use pocketmine\event\player\PlayerPreLoginEvent;
 use pocketmine\event\player\PlayerQuitEvent;
@@ -129,6 +130,7 @@ use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 use pocketmine\network\mcpe\protocol\LoginPacket;
 use pocketmine\network\mcpe\protocol\MapInfoRequestPacket;
 use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
+use pocketmine\network\mcpe\protocol\ModalFormResponsePacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
 use pocketmine\network\mcpe\protocol\PingPacket;
 use pocketmine\network\mcpe\protocol\PlayerActionPacket;
@@ -3170,6 +3172,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		return true;
 	}
 
+	public function handleModalFormResponse(ModalFormResponsePacket $packet) : bool{
+		$this->getServer()->getPluginManager()->callEvent($event = new PlayerModalFormResponseEvent($this, $packet->formId, $packet->formData));
+
+		return true;
+	}
 	/**
 	 * Called when a packet is received from the client. This method will call DataPacketReceiveEvent.
 	 *
