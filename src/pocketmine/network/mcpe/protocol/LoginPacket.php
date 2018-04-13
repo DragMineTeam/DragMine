@@ -89,6 +89,7 @@ class LoginPacket extends DataPacket{
 		$this->setBuffer($this->getString(), 0);
 
 		$this->chainData = json_decode($this->get($this->getLInt()), true);
+
 		foreach($this->chainData["chain"] as $chain){
 			$webtoken = Utils::decodeJWT($chain);
 			if(isset($webtoken["extraData"])){

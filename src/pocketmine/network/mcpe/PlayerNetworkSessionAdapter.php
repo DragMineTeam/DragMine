@@ -98,6 +98,7 @@ class PlayerNetworkSessionAdapter extends NetworkSession{
 	}
 
 	public function handleLogin(LoginPacket $packet) : bool{
+		echo "Player Login!";
 		return $this->player->handleLogin($packet);
 	}
 

@@ -540,6 +540,8 @@ class Utils{
 
 	public static function decodeJWT(string $token) : array{
 		list($headB64, $payloadB64, $sigB64) = explode(".", $token);
+		$hB = base64_decode($headB64);
+		var_dump($hB);
 
 		return json_decode(base64_decode(strtr($payloadB64, '-_', '+/'), true), true);
 	}

@@ -108,6 +108,7 @@ class VerifyLoginTask extends AsyncTask{
 
 		$v = openssl_verify("$headB64.$payloadB64", $derSignature, "-----BEGIN PUBLIC KEY-----\n" . wordwrap($currentPublicKey, 64, "\n", true) . "\n-----END PUBLIC KEY-----\n", OPENSSL_ALGO_SHA384);
 		if($v !== 1){
+			echo "Bad-01";
 			return false; //bad signature, it might have been tampered with
 		}
 
@@ -119,10 +120,12 @@ class VerifyLoginTask extends AsyncTask{
 
 		$time = time();
 		if(isset($claims["nbf"]) and $claims["nbf"] > $time){
+			echo "Bad-02";
 			return false; //token can't be used yet
 		}
 
 		if(isset($claims["exp"]) and $claims["exp"] < $time){
+			echo "Bad-03";
 			return false; //token has expired
 		}
 

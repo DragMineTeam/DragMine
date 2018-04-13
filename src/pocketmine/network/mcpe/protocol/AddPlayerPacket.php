@@ -37,10 +37,16 @@ class AddPlayerPacket extends DataPacket{
 	public $uuid;
 	/** @var string */
 	public $username;
+	/** @var string */
+	public $thirdPartyName = "";
+	/** @var int */
+	public $platform = 0;
 	/** @var int|null */
 	public $entityUniqueId = null; //TODO
 	/** @var int */
 	public $entityRuntimeId;
+	/** @var string */
+	public $platformChatId = "";
 	/** @var Vector3 */
 	public $position;
 	/** @var Vector3|null */
@@ -70,8 +76,11 @@ class AddPlayerPacket extends DataPacket{
 	protected function decodePayload(){
 		$this->uuid = $this->getUUID();
 		$this->username = $this->getString();
+		$this->thirdPartyName = $this->getString();
+		$this->platform = $this->getVarInt();
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
+		$this->platformChatId = $this->getString();
 		$this->position = $this->getVector3Obj();
 		$this->motion = $this->getVector3Obj();
 		$this->pitch = $this->getLFloat();
@@ -97,8 +106,10 @@ class AddPlayerPacket extends DataPacket{
 	protected function encodePayload(){
 		$this->putUUID($this->uuid);
 		$this->putString($this->username);
-		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
-		$this->putEntityRuntimeId($this->entityRuntimeId);
+		$this->putString($this->thirdPartyName);
+		$this->putVarInt($this->platform);
+		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);		$this->putEntityRuntimeId($this->entityRuntimeId);
+		$this->putString($this->platformChatId);
 		$this->putVector3Obj($this->position);
 		$this->putVector3ObjNullable($this->motion);
 		$this->putLFloat($this->pitch);
