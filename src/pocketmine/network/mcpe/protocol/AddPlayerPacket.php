@@ -88,7 +88,6 @@ class AddPlayerPacket extends DataPacket{
 		$this->yaw = $this->getLFloat();
 		$this->item = $this->getSlot();
 		$this->metadata = $this->getEntityMetadata();
-
 		$this->uvarint1 = $this->getUnsignedVarInt();
 		$this->uvarint2 = $this->getUnsignedVarInt();
 		$this->uvarint3 = $this->getUnsignedVarInt();
@@ -108,7 +107,8 @@ class AddPlayerPacket extends DataPacket{
 		$this->putString($this->username);
 		$this->putString($this->thirdPartyName);
 		$this->putVarInt($this->platform);
-		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);		$this->putEntityRuntimeId($this->entityRuntimeId);
+		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
+		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putString($this->platformChatId);
 		$this->putVector3Obj($this->position);
 		$this->putVector3ObjNullable($this->motion);
