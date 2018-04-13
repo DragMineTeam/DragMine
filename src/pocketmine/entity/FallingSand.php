@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\entity;
 
 use pocketmine\block\Block;
+use pocketmine\block\BlockFactory;
 use pocketmine\block\Fallable;
 use pocketmine\event\entity\EntityBlockChangeEvent;
 use pocketmine\event\entity\EntityDamageEvent;
@@ -75,7 +76,7 @@ class FallingSand extends Entity{
 
 		$this->block = Block::get($blockId, $damage);
 
-		$this->setDataProperty(self::DATA_VARIANT, self::DATA_TYPE_INT, $this->block->getId() | ($this->block->getDamage() << 8));
+		$this->setDataProperty(self::DATA_VARIANT, self::DATA_TYPE_INT, BlockFactory::toStaticRuntimeId($this->block->getId(), $this->block->getDamage()));
 	}
 
 	public function canCollideWith(Entity $entity) : bool{
