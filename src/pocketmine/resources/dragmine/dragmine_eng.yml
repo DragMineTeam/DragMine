@@ -2,9 +2,13 @@
 
 dragmine:
  # Config version
- config-version: 1
+ config-version: 2
 
 player:
  # Manage player data with xuid
- # There is a merit that the inventory does not change when the game tag is changed.
+ # There is a merit that the player inventory does not change when the game tag was changed.
  manage-xuid: false
+
+server:
+ # Show version in Motd
+ show-version: true

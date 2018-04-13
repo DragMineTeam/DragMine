@@ -30,6 +30,7 @@ use pocketmine\network\mcpe\protocol\DataPacket;
 use pocketmine\network\mcpe\protocol\PacketPool;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\Network;
+use pocketmine\utils\TextFormat;
 use pocketmine\Player;
 use pocketmine\Server;
 use raklib\protocol\EncapsulatedPacket;
@@ -182,25 +183,14 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 	public function setName(string $name){
 		$info = $this->server->getQueryInformation();
 
-		/*$this->interface->sendOption("name", implode(";",
-			[
-				"MCPE",
-				rtrim(addcslashes($name, ";"), '\\'),
-				ProtocolInfo::CURRENT_PROTOCOL,
-				ProtocolInfo::MINECRAFT_VERSION_NETWORK,
-				$info->getPlayerCount(),
-				$info->getMaxPlayerCount(),
-				$this->rakLib->getServerId(),
-				$this->server->getName(),
-				Server::getGamemodeName($this->server->getGamemode())
-			]) . ";"
-		);*/
+		$version = $this->server->getDragMineOption("server.show-version") ? ProtocolInfo::MINECRAFT_VERSION_NETWORK : "";
+
 		$this->interface->sendOption("name", implode(";",
 			[
 				"MCPE",
-				rtrim(addcslashes($name, ";"), '\\'),
+				rtrim(addcslashes($name, ";"), '\\') . TextFormat::RESET,
 				ProtocolInfo::CURRENT_PROTOCOL,
-				"",
+				$version,
 				$info->getPlayerCount(),
 				$info->getMaxPlayerCount(),
 				$this->rakLib->getServerId(),
