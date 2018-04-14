@@ -31,9 +31,9 @@ interface ProtocolInfo{
 	const CURRENT_PROTOCOL = 223;
 	const MULTI_PROTOCOLS = [220, 222, 223];
 
-	const MINECRAFT_VERSION = "v1.2.14";
+	const MINECRAFT_VERSION = "v1.2.15";
 
-	const MINECRAFT_VERSION_NETWORK = "1.2.14";
+	const MINECRAFT_VERSION_NETWORK = "1.2.15";
 
 	const LOGIN_PACKET = 0x01;
 	const PLAY_STATUS_PACKET = 0x02;
