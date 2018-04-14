@@ -93,9 +93,8 @@ class FloatingTextParticle extends Particle{
 			$pk->position = $this->asVector3(); //TODO: check offset
 			$pk->item = ItemFactory::get(Item::AIR, 0, 0);
 
-			$flags = 
-				1 << Entity::DATA_FLAG_IMMOBILE
-			);
+			$flags = 0;
+    			$flags |= 1 << Entity::DATA_FLAG_IMMOBILE;
 
 			$pk->metadata = [
 				Entity::DATA_FLAGS =>   [Entity::DATA_TYPE_LONG,   $flags],
