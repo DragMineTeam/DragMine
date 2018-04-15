@@ -26,13 +26,20 @@ namespace pocketmine\entity;
 use pocketmine\level\Level;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\protocol\AddEntityPacket;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
+use pocketmine\event\entity\EntityDamageEvent;
+use pocketmine\event\entity\EntityDamageByEntityEvent;
+use pocketmine\event\entity\EntityDamageByChildEntityEvent;
+use pocketmine\event\entity\EntityCombustByEntityEvent;
+use pocketmine\event\entity\ProjectileHitEvent;
+use pocketmine\entity\Human;
 use pocketmine\Player;
 
 class Arrow extends Projectile{
 	const NETWORK_ID = 80;
 
-	public $width = 0.5;
-	public $height = 0.5;
+	public $width = 0.25;
+	public $height = 0.25;
 
 	protected $gravity = 0.05;
 	protected $drag = 0.01;
@@ -52,15 +59,6 @@ class Arrow extends Projectile{
 		$this->setGenericFlag(self::DATA_FLAG_CRITICAL, $value);
 	}
 
-	public function getResultDamage() : int{
-		$base = parent::getResultDamage();
-		if($this->isCritical()){
-			return ($base + mt_rand(0, (int) ($base / 2) + 1));
-		}else{
-			return $base;
-		}
-	}
-
 	public function entityBaseTick(int $tickDiff = 1) : bool{
 		if($this->closed){
 			return false;
@@ -78,6 +76,39 @@ class Arrow extends Projectile{
 		}
 
 		return $hasUpdate;
+	}
+
+	public function onCollideWithEntity(Entity $entity){
+		if($entity instanceof Human){
+			$this->inventory = $entity->getInventory();
+		}
+
+		$this->server->getPluginManager()->callEvent(new ProjectileHitEvent($this));
+
+		$damage = $this->getResultDamage();
+		$damage = [EntityDamageEvent::MODIFIER_BASE => $damage];
+
+		$points = 0;
+		foreach($entity->getInventory()->getArmorContents() as $armorItem){
+			$points += $armorItem->getDefensePoints();
+		}
+		$damage[EntityDamageEvent::MODIFIER_ARMOR] = -($damage[EntityDamageEvent::MODIFIER_BASE] * $points * 0.04);
+
+		if($this->getOwningEntity() === null){
+			$ev = new EntityDamageByEntityEvent($this, $entity, EntityDamageEvent::CAUSE_PROJECTILE, $damage);
+		}else{
+			$ev = new EntityDamageByChildEntityEvent($this->getOwningEntity(), $this, $entity, EntityDamageEvent::CAUSE_PROJECTILE, $damage);
+		}
+		$entity->attack($ev);
+		$this->hadCollision = true;
+		if($this->fireTicks > 0){
+			$ev = new EntityCombustByEntityEvent($this, $entity, 5);
+			$this->server->getPluginManager()->callEvent($ev);
+			if(!$ev->isCancelled()){
+				$entity->setOnFire($ev->getDuration());
+			}
+		}
+		$this->close();
 	}
 
 	public function spawnTo(Player $player){

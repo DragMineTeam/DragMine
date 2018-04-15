@@ -88,7 +88,8 @@ class MapUtils {
 			new Color(112, 2, 0),
 			//new 1.8 colors
 			new Color(126, 84, 48)];
-		for ($i = 0; $i < count(self::$BaseMapColors); ++$i) {
+
+		for($i = 0; $i < count(self::$BaseMapColors); ++$i){
 			/** @var Color $bc */
 			$bc = self::$BaseMapColors[$i];
 			self::$MapColors[$i * 4 + 0] = new Color((int)($bc->getR() * 180.0 / 255.0 + 0.5), (int)($bc->getG() * 180.0 / 255.0 + 0.5), (int)($bc->getB() * 180.0 / 255.0 + 0.5), $bc->getA());
@@ -114,7 +115,7 @@ class MapUtils {
 		return self::$BaseMapColors;
 	}
 
-	public static function cacheMap(Map $map){//TODO: serialize?
+	public static function cacheMap(Map $map){ //TODO: serialize?
 		self::$cachedMaps[$map->getMapId()] = $map;
 	}
 
@@ -150,27 +151,6 @@ class MapUtils {
 		return ($hsv1['v'] - $hsv2['v']) ** 2
 			+ ($hsv1['s'] * cos($hsv1['h']) - $hsv2['s'] * cos($hsv2['h'])) ** 2
 			+ ($hsv1['s'] * sin($hsv1['h']) - $hsv2['s'] * sin($hsv2['h'])) ** 2;
-	}
-
-	public static function exportToPDF(Map $map){
-		if (!extension_loaded("gd")){
-			return false;
-		}
-		@mkdir(Server::getInstance()->getDataPath()."maps");
-		$filename = Server::getInstance()->getDataPath()."maps/map_".$map->getMapId().".png";
-		$colors = $map->getColors();
-		$width = $map->getWidth();
-		$height = $map->getHeight();
-		$img = imagecreatetruecolor($width, $height);
-		#imagecolortransparent($img, imagecolorallocate($img, 0, 0, 0));
-		for ($y = 0; $y < $height; ++$y) {
-			for ($x = 0; $x < $width; ++$x) {
-				/** @var Color $color */
-				$color = $colors[$y][$x];
-				imagesetpixel($img, $x, $y, imagecolorallocate($img, $color->getR(),$color->getG(),$color->getB()));
-			}
-		}
-		return imagepng($img, $filename);
 	}
 
 	public static function exportToPNG(Map $map){
@@ -249,6 +229,33 @@ class MapUtils {
 			case Block::SLIME_BLOCK:
 				return new Color(127, 178, 56);
 				break;
+			case Block::SAND:
+			case Block::SANDSTONE:
+			case Block::SANDSTONE_STAIRS:
+			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::SANDSTONE:
+			case Block::DOUBLE_STONE_SLAB && $meta == StoneSlab::SANDSTONE:
+			case Block::GLOWSTONE:
+			case Block::END_STONE:
+			case Block::PLANKS && $meta == Planks::BIRCH:
+			case Block::LOG && $meta == Planks::BIRCH:
+			case Block::FENCE && $meta = Planks::BIRCH:
+			case Block::BIRCH_FENCE_GATE:
+			case Block::BIRCH_STAIRS:
+			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::BIRCH:
+			//case Block::BROWN_MUSHROOM_BLOCK:
+			case Block::BONE_BLOCK:
+			case Block::END_BRICKS:
+				return new Color(247, 233, 163);
+				break;
+			case Block::IRON_BLOCK:
+			case Block::IRON_DOOR_BLOCK:
+			case Block::IRON_TRAPDOOR:
+			case Block::IRON_BARS:
+			case Block::BREWING_STAND_BLOCK:
+			case Block::ANVIL:
+			case Block::HEAVY_WEIGHTED_PRESSURE_PLATE:
+				return new Color(167, 167, 167);
+				break;
 			case Block::DIRT:
 			case Block::FARMLAND:
 			case Block::STONE && $meta == Stone::GRANITE:
@@ -265,7 +272,7 @@ class MapUtils {
 				break;
 			case Block::BED_BLOCK:
 			case Block::COBWEB:
-			//case Block::BROWN_MUSHROOM_BLOCK://todo: stem, sides only
+			//case Block::BROWN_MUSHROOM_BLOCK:
 				return new Color(199, 199, 199);
 				break;
 			case Block::LAVA:
@@ -279,15 +286,6 @@ class MapUtils {
 			case Block::PACKED_ICE:
 			case Block::FROSTED_ICE:
 				return new Color(160, 160, 255);
-				break;
-			case Block::IRON_BLOCK:
-			case Block::IRON_DOOR_BLOCK:
-			case Block::IRON_TRAPDOOR:
-			case Block::IRON_BARS:
-			case Block::BREWING_STAND_BLOCK:
-			case Block::ANVIL:
-			case Block::HEAVY_WEIGHTED_PRESSURE_PLATE:
-				return new Color(167, 167, 167);
 				break;
 			case Block::SAPLING:
 			case Block::LEAVES:
@@ -526,24 +524,6 @@ class MapUtils {
 				break;
 			case Block::EMERALD_BLOCK:
 				return new Color(0, 217, 58);
-				break;
-			case Block::SAND:
-			case Block::SANDSTONE:
-			case Block::SANDSTONE_STAIRS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::SANDSTONE:
-			case Block::DOUBLE_STONE_SLAB && $meta == StoneSlab::SANDSTONE:
-			case Block::GLOWSTONE:
-			case Block::END_STONE:
-			case Block::PLANKS && $meta == Planks::BIRCH:
-			case Block::LOG && $meta == Planks::BIRCH:
-			case Block::BIRCH_FENCE_GATE:
-			case Block::FENCE && $meta = Planks::BIRCH:
-			case Block::BIRCH_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::BIRCH:
-			//case Block::BROWN_MUSHROOM_BLOCK://todo: meta check for non stem inside textures
-			case Block::BONE_BLOCK:
-			case Block::END_BRICKS:
-				return new Color(247, 233, 163);
 				break;
 			case Block::PODZOL:
 			case Block::WOOD && $meta == Planks::SPRUCE:
