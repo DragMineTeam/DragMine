@@ -98,7 +98,9 @@ class Bow extends Tool{
 			}else{
 				$entity->setMotion($entity->getMotion()->multiply($ev->getForce()));
 				if($player->isSurvival()){
-					$player->getInventory()->removeItem(ItemFactory::get(Item::ARROW, 0, 1));
+					if(!$this->hasEnchantment(22)){
+						$player->getInventory()->removeItem(ItemFactory::get(Item::ARROW, 0, 1));
+					}
 					$this->setDamage($this->getDamage() + 1);
 					if($this->getDamage() >= $this->getMaxDurability()){
 						$player->getInventory()->setItemInHand(ItemFactory::get(Item::AIR, 0, 0));
