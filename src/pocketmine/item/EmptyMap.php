@@ -50,7 +50,6 @@ class EmptyMap extends Item{
 		}
 		$xx = $size;
 		$yy = $size;
-		$output = "";
 		for($x=$vec->x+($size/2);$x>=$vec->x-($size/2);$x--, $xx--){
 			for($z=$vec->z+($size/2);$z>=$vec->z-($size/2);$z--, $yy--){
 				if($yy < 0){
@@ -62,11 +61,9 @@ class EmptyMap extends Item{
 				}else{
 					$block = $player->getLevel()->getBlock(new Vector3($x, $y, $z));
 					$result[$yy][$xx] = MapUtils::getBlockColor($block);
-					$output .= "Name: " . $block->getName() . " X: " . $xx . " Y: " . $yy . " Color: (" . $result[$yy][$xx]->getR() . ", " . $result[$yy][$xx]->getG() . ", " . $result[$yy][$xx]->getB() . ")\n";
 				}
 			}
 		}
-		file_put_contents("output.txt", $output);
 		$map = new FilledMap($id, $result, $this->size, $size, $size);
 		$tag = new CompoundTag("", []);
 		$tag->map_uuid = new StringTag("map_uuid", (string)$id);
