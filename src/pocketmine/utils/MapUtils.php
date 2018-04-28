@@ -47,20 +47,18 @@ class MapUtils {
 	public function __construct() {
 		$path = Server::getInstance()->getDataPath() . "maps";
 		@mkdir($path);
-		$filename = "idcounts.json";
-		self::$idConfig = new Config($path . "/" . $filename, Config::JSON, ["map" => 0]);
+		self::$idConfig = new Config($path . "/idcounts.json" , Config::JSON, ["map" => 0]);
 		self::$BaseMapColors = [
-			new Color(0, 0, 0, 0),
 			new Color(127, 178, 56),
 			new Color(247, 233, 163),
 			new Color(167, 167, 167),
 			new Color(255, 0, 0),
 			new Color(160, 160, 255),
-			new Color(167, 167, 167),
 			new Color(0, 124, 0),
 			new Color(255, 255, 255),
+			new Color(199, 199, 199),
 			new Color(164, 168, 184),
-			new Color(183, 106, 47),
+			new Color(151, 109, 77),
 			new Color(112, 112, 112),
 			new Color(64, 64, 255),
 			new Color(104, 83, 50),
@@ -84,10 +82,8 @@ class MapUtils {
 			new Color(92, 219, 213),
 			new Color(74, 128, 255),
 			new Color(0, 217, 58),
-			new Color(21, 20, 31),
 			new Color(112, 2, 0),
-			//new 1.8 colors
-			new Color(126, 84, 48)];
+			new Color(129, 86, 49)];
 
 		for($i = 0; $i < count(self::$BaseMapColors); ++$i){
 			/** @var Color $bc */
@@ -100,7 +96,7 @@ class MapUtils {
 	}
 
 	public static function getNewId(){
-		$id = self::$idConfig->get("map", 0);
+		$id = self::$idConfig->get("map");
 		$id++;
 		self::$idConfig->set("map", $id);
 		self::$idConfig->save();
@@ -222,330 +218,380 @@ class MapUtils {
 	}
 
 	public static function getBlockColor(Block $block) {
-		$meta = $block->getDamage();
 		$id = $block->getId();
-		switch($id){
-			case Block::GRASS:
-			case Block::SLIME_BLOCK:
-				return new Color(127, 178, 56);
-				break;
-			case Block::SAND:
-			case Block::SANDSTONE:
-			case Block::SANDSTONE_STAIRS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::SANDSTONE:
-			case Block::DOUBLE_STONE_SLAB && $meta == StoneSlab::SANDSTONE:
-			case Block::GLOWSTONE:
-			case Block::END_STONE:
-			case Block::PLANKS && $meta == Planks::BIRCH:
-			case Block::LOG && $meta == Planks::BIRCH:
-			case Block::FENCE && $meta = Planks::BIRCH:
-			case Block::BIRCH_FENCE_GATE:
-			case Block::BIRCH_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::BIRCH:
-			//case Block::BROWN_MUSHROOM_BLOCK:
-			case Block::BONE_BLOCK:
-			case Block::END_BRICKS:
-				return new Color(247, 233, 163);
-				break;
-			case Block::IRON_BLOCK:
-			case Block::IRON_DOOR_BLOCK:
-			case Block::IRON_TRAPDOOR:
-			case Block::IRON_BARS:
-			case Block::BREWING_STAND_BLOCK:
-			case Block::ANVIL:
-			case Block::HEAVY_WEIGHTED_PRESSURE_PLATE:
-				return new Color(167, 167, 167);
-				break;
-			case Block::DIRT:
-			case Block::FARMLAND:
-			case Block::STONE && $meta == Stone::GRANITE:
-			case Block::STONE && $meta == Stone::POLISHED_GRANITE:
-			case Block::RED_SANDSTONE:
-			case Block::RED_SANDSTONE_STAIRS:
-			case Block::LOG && $meta == Planks::JUNGLE:
-			case Block::PLANKS && $meta == Planks::JUNGLE:
-			case Block::JUNGLE_FENCE_GATE:
-			case Block::FENCE && $meta == Planks::JUNGLE:
-			case Block::JUNGLE_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::JUNGLE:
-				return new Color(151, 109, 77);
-				break;
-			case Block::BED_BLOCK:
-			case Block::COBWEB:
-			//case Block::BROWN_MUSHROOM_BLOCK:
-				return new Color(199, 199, 199);
-				break;
-			case Block::LAVA:
-			case Block::STILL_LAVA:
-			case Block::TNT:
-			case Block::FIRE:
-			case Block::REDSTONE_BLOCK:
-				return new Color(255, 0, 0);
-				break;
-			case Block::ICE:
-			case Block::PACKED_ICE:
-			case Block::FROSTED_ICE:
-				return new Color(160, 160, 255);
-				break;
-			case Block::SAPLING:
-			case Block::LEAVES:
-			case Block::LEAVES2:
-			case Block::TALL_GRASS:
-			case Block::DEAD_BUSH:
-			case Block::RED_FLOWER:
-			case Block::DOUBLE_PLANT:
-			case Block::BROWN_MUSHROOM:
-			case Block::RED_MUSHROOM:
-			case Block::WHEAT_BLOCK:
-			case Block::CARROT_BLOCK:
-			case Block::POTATO_BLOCK:
-			case Block::BEETROOT_BLOCK:
-			case Block::CACTUS:
-			case Block::SUGARCANE_BLOCK:
-			case Block::PUMPKIN_STEM:
-			case Block::MELON_STEM:
-			case Block::VINE:
-			case Block::LILY_PAD:
-				return new Color(0, 124, 0);
-				break;
-			case Block::WOOL && $meta == Dye::WHITE:
-			case Block::CARPET && $meta == Dye::WHITE:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::WHITE:
-			case Block::SNOW_LAYER:
-			case Block::SNOW_BLOCK:
-				return new Color(255, 255, 255);
-				break;
-			case Block::CLAY_BLOCK:
-			case Block::MONSTER_EGG:
-				return new Color(164, 168, 184);
-				break;
-			case Block::STONE:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::STONE:
-			case Block::COBBLESTONE:
-			case Block::COBBLESTONE_STAIRS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::COBBLESTONE:
-			case Block::COBBLESTONE_WALL:
-			case Block::MOSSY_COBBLESTONE:
-			case Block::STONE && $meta == Stone::ANDESITE:
-			case Block::STONE && $meta == Stone::POLISHED_ANDESITE:
-			case Block::BEDROCK:
-			case Block::GOLD_ORE:
-			case Block::IRON_ORE:
-			case Block::COAL_ORE:
-			case Block::LAPIS_ORE:
-			case Block::DISPENSER:
-			case Block::DROPPER:
-			case Block::STICKY_PISTON:
-			case Block::PISTON:
-			case Block::PISTON_ARM_COLLISION:
-			case Block::MONSTER_SPAWNER:
-			case Block::DIAMOND_ORE:
-			case Block::FURNACE:
-			case Block::STONE_PRESSURE_PLATE:
-			case Block::REDSTONE_ORE:
-			case Block::STONE_BRICK:
-			case Block::STONE_BRICK_STAIRS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::STONE_BRICK:
-			case Block::ENDER_CHEST:
-			case Block::HOPPER_BLOCK:
-			case Block::GRAVEL:
-			case Block::OBSERVER:
-				return new Color(112, 112, 112);
-				break;
-			case Block::WATER:
-			case Block::STILL_WATER:
-				return new Color(64, 64, 255);
-				break;
-			case Block::WOOD && $meta == Planks::OAK:
-			case Block::PLANKS && $meta == Planks::OAK:
-			case Block::FENCE && $meta == Planks::OAK:
-			case Block::OAK_FENCE_GATE:
-			case Block::OAK_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::OAK:
-			case Block::NOTEBLOCK:
-			case Block::BOOKSHELF:
-			case Block::CHEST:
-			case Block::TRAPPED_CHEST:
-			case Block::CRAFTING_TABLE:
-			case Block::WOODEN_DOOR_BLOCK:
-			case Block::BIRCH_DOOR_BLOCK:
-			case Block::SPRUCE_DOOR_BLOCK:
-			case Block::JUNGLE_DOOR_BLOCK:
-			case Block::ACACIA_DOOR_BLOCK:
-			case Block::DARK_OAK_DOOR_BLOCK:
-			case Block::SIGN_POST:
-			case Block::WALL_BANNER:
-			case Block::WALL_SIGN:
-			case Block::WOODEN_PRESSURE_PLATE:
-			case Block::JUKEBOX:
-			case Block::WOODEN_TRAPDOOR:
-			case Block::BROWN_MUSHROOM_BLOCK:
-			case Block::STANDING_BANNER:
-			case Block::DAYLIGHT_SENSOR:
-			case Block::DAYLIGHT_SENSOR_INVERTED:
-				return new Color(143, 119, 72);
-				break;
-			case Block::QUARTZ_BLOCK:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::QUARTZ:
-			case Block::QUARTZ_STAIRS:
-			case Block::STONE && $meta == Stone::DIORITE:
-			case Block::STONE && $meta == Stone::POLISHED_DIORITE:
-			case Block::SEA_LANTERN:
-				return new Color(255, 252, 245);
-				break;
-			case Block::WOOL && $meta == Dye::ORANGE:
-			case Block::CARPET && $meta == Dye::ORANGE:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::ORANGE:
-			case Block::PUMPKIN:
-			case Block::JACK_O_LANTERN:
-			case Block::HARDENED_CLAY:
-			case Block::WOOD && $meta == Planks::ACACIA:
-			case Block::PLANKS && $meta == Planks::ACACIA:
-			case Block::FENCE && $meta == Planks::ACACIA:
-			case Block::ACACIA_FENCE_GATE:
-			case Block::ACACIA_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::ACACIA:
-				return new Color(216, 127, 51);
-				break;
-			case Block::WOOL && $meta == Dye::MAGENTA:
-			case Block::CARPET && $meta == Dye::MAGENTA:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::MAGENTA:
-			case Block::PURPUR_BLOCK:
-			case Block::PURPUR_STAIRS:
-				return new Color(178, 76, 216);
-				break;
-			case Block::WOOL && $meta == Dye::LIGHT_BLUE:
-			case Block::CARPET && $meta == Dye::LIGHT_BLUE:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::LIGHT_BLUE:
-				return new Color(102, 153, 216);
-				break;
-			case Block::WOOL && $meta == Dye::YELLOW:
-			case Block::CARPET && $meta == Dye::YELLOW:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::YELLOW:
-			case Block::HAY_BALE:
-			case Block::SPONGE:
-				return new Color(229, 229, 51);
-				break;
-			case Block::WOOL && $meta == Dye::LIME:
-			case Block::CARPET && $meta == Dye::LIME:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::LIME:
-			case Block::MELON_BLOCK:
-				return new Color(229, 229, 51);
-				break;
-			case Block::WOOL && $meta == Dye::PINK:
-			case Block::CARPET && $meta == Dye::PINK:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::PINK:
-				return new Color(242, 127, 165);
-				break;
-			case Block::WOOL && $meta == Dye::GRAY:
-			case Block::CARPET && $meta == Dye::GRAY:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::GRAY:
-			case Block::CAULDRON_BLOCK:
-				return new Color(76, 76, 76);
-				break;
-			case Block::WOOL && $meta == Dye::LIGHT_GRAY:
-			case Block::CARPET && $meta == Dye::LIGHT_GRAY:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::LIGHT_GRAY:
-			case Block::STRUCTURE_BLOCK:
-				return new Color(153, 153, 153);
-				break;
-			case Block::WOOL && $meta == Dye::CYAN:
-			case Block::CARPET && $meta == Dye::CYAN:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::CYAN:
-			case Block::PRISMARINE && $meta == Prismarine::NORMAL:
-				return new Color(76, 127, 153);
-				break;
-			case Block::WOOL && $meta == Dye::PURPLE:
-			case Block::CARPET && $meta == Dye::PURPLE:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::PURPLE:
-			case Block::MYCELIUM:
-			case Block::REPEATING_COMMAND_BLOCK:
-			case Block::CHORUS_PLANT:
-			case Block::CHORUS_FLOWER:
-				return new Color(127, 63, 178);
-				break;
-			case Block::WOOL && $meta == Dye::DARK_BLUE:
-			case Block::CARPET && $meta == Dye::DARK_BLUE:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::DARK_BLUE:
-				return new Color(51, 76, 178);
-				break;
-			case Block::WOOL && $meta == Dye::BROWN:
-			case Block::CARPET && $meta == Dye::BROWN:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::BROWN:
-			case Block::SOUL_SAND:
-			case Block::WOOD && $meta == Planks::DARK_OAK:
-			case Block::PLANKS && $meta == Planks::DARK_OAK:
-			case Block::FENCE && $meta == Planks::DARK_OAK:
-			case Block::DARK_OAK_FENCE_GATE:
-			case Block::DARK_OAK_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::DARK_OAK:
-			case Block::COMMAND_BLOCK:
-				return new Color(102, 76, 51);
-				break;
-			case Block::WOOL && $meta == Dye::GREEN:
-			case Block::CARPET && $meta == Dye::GREEN:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::GREEN:
-			case Block::END_PORTAL_FRAME:
-			case Block::CHAIN_COMMAND_BLOCK:
-				return new Color(102, 127, 51);
-				break;
-			case Block::WOOL && $meta == Dye::RED:
-			case Block::CARPET && $meta == Dye::RED:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::RED:
-			case Block::RED_MUSHROOM_BLOCK://todo: meta
-			case Block::BRICKS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::BRICK:
-			case Block::BRICK_STAIRS:
-			case Block::ENCHANTING_TABLE:
-			case Block::NETHER_WART_BLOCK:
-				return new Color(153, 51, 51);
-				break;
-			case Block::WOOL && $meta == Dye::BLACK:
-			case Block::CARPET && $meta == Dye::BLACK:
-			case Block::STAINED_HARDENED_CLAY && $meta == Dye::BLACK:
-			case Block::DRAGON_EGG:
-			case Block::COAL_BLOCK:
-			case Block::OBSIDIAN:
-			case Block::END_PORTAL_BLOCK:
-				return new Color(25, 25, 25);
-				break;
-			case Block::GOLD_BLOCK:
-			case Block::LIGHT_WEIGHTED_PRESSURE_PLATE:
-				return new Color(250, 238, 77);
-				break;
-			case Block::DIAMOND_BLOCK:
-			case Block::PRISMARINE && $meta == Prismarine::DARK:
-			case Block::PRISMARINE && $meta == Prismarine::BRICKS:
-			case Block::BEACON:
-				return new Color(92, 219, 213);
-				break;
-			case Block::LAPIS_BLOCK:
-				return new Color(74, 128, 255);
-				break;
-			case Block::EMERALD_BLOCK:
-				return new Color(0, 217, 58);
-				break;
-			case Block::PODZOL:
-			case Block::WOOD && $meta == Planks::SPRUCE:
-			case Block::PLANKS && $meta == Planks::SPRUCE:
-			case Block::FENCE && $meta == Planks::SPRUCE:
-			case Block::SPRUCE_FENCE_GATE:
-			case Block::SPRUCE_STAIRS:
-			case Block::WOODEN_SLAB && ($meta & 0x07) == Planks::SPRUCE:
-				return new Color(129, 86, 49);
-				break;
-			case Block::NETHERRACK:
-			case Block::NETHER_QUARTZ_ORE:
-			case Block::NETHER_BRICK_FENCE:
-			case Block::NETHER_BRICK_BLOCK:
-			case Block::RED_NETHER_BRICK:
-			case Block::MAGMA:
-			case Block::NETHER_BRICK_STAIRS:
-			case Block::STONE_SLAB && ($meta & 0x07) == StoneSlab::NETHER_BRICK:
-				return new Color(112, 2, 0);
-				break;
-			default:
-				return new Color(0, 0, 0, 0);
+		$meta = $block->getDamage();
+		// [BlockId, MetaData, isEncode]
+
+		$blockColors = [
+			[
+				// (127, 178, 56)
+				[Block::GRASS, -1],
+				[Block::SLIME_BLOCK, -1]
+			],
+			[
+				// (247, 233, 163)
+				[Block::SAND, 0, false],
+				[Block::SANDSTONE, -1],
+				[Block::SANDSTONE_STAIRS, -1],
+				[Block::STONE_SLAB, StoneSlab::SANDSTONE, true],
+				[Block::DOUBLE_STONE_SLAB, StoneSlab::SANDSTONE, false],
+				[Block::GLOWSTONE, -1],
+				[Block::END_STONE, -1],
+				[Block::PLANKS, Planks::BIRCH, false],
+				[Block::LOG, Planks::BIRCH, false],
+				[Block::FENCE, Planks::BIRCH, false],
+				[Block::BIRCH_FENCE_GATE, -1],
+				[Block::BIRCH_STAIRS, -1],
+				[Block::WOODEN_SLAB, Planks::BIRCH, true],
+				[Block::BONE_BLOCK, -1],
+				[Block::END_BRICKS, -1]
+			],
+			[
+				// (167, 167, 167)
+				[Block::IRON_BLOCK, -1],
+				[Block::IRON_DOOR_BLOCK, -1],
+				[Block::IRON_TRAPDOOR, -1],
+				[Block::IRON_BARS, -1],
+				[Block::BREWING_STAND_BLOCK, -1],
+				[Block::ANVIL, -1],
+				[Block::HEAVY_WEIGHTED_PRESSURE_PLATE, -1]
+			],
+			[
+				// (255, 0, 0)
+				[Block::LAVA, -1],
+				[Block::STILL_LAVA, -1],
+				[Block::TNT, -1],
+				[Block::FIRE, -1],
+				[Block::REDSTONE_BLOCK, -1]
+			],
+			[
+				// (160, 160, 255)
+				[Block::ICE, -1],
+				[Block::PACKED_ICE, -1],
+				[Block::FROSTED_ICE, -1]
+			],
+			[
+				// (0, 124, 0)
+				[Block::SAPLING, -1],
+				[Block::LEAVES, -1],
+				[Block::LEAVES2, -1],
+				[Block::TALL_GRASS, -1],
+				[Block::DEAD_BUSH, -1],
+				[Block::RED_FLOWER, -1],
+				[Block::DOUBLE_PLANT, -1],
+				[Block::BROWN_MUSHROOM, -1],
+				[Block::RED_MUSHROOM, -1],
+				[Block::WHEAT_BLOCK, -1],
+				[Block::CARROT_BLOCK, -1],
+				[Block::POTATO_BLOCK, -1],
+				[Block::BEETROOT_BLOCK, -1],
+				[Block::CACTUS, -1],
+				[Block::SUGARCANE_BLOCK, -1],
+				[Block::PUMPKIN_STEM, -1],
+				[Block::MELON_STEM, -1],
+				[Block::VINE, -1],
+				[Block::LILY_PAD, -1]
+			],
+			[
+				// (255, 255, 255)
+				[Block::WOOL, Dye::WHITE, false],
+				[Block::CARPET, Dye::WHITE, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::WHITE, false],
+				[Block::SNOW_LAYER, -1],
+				[Block::SNOW_BLOCK, -1]
+			],
+			[
+				// (199, 199, 199)
+				[Block::BED_BLOCK, -1],
+				[Block::COBWEB, -1]
+			],
+			[
+				// (164, 168, 184)
+				[Block::CLAY_BLOCK, -1],
+				[Block::MONSTER_EGG, -1]
+			],
+			[
+				// (151, 109, 77)
+				[Block::DIRT, -1],
+				[Block::FARMLAND, -1],
+				[Block::STONE, Stone::GRANITE, false],
+				[Block::STONE, Stone::POLISHED_GRANITE, false],
+				[Block::LOG, Planks::JUNGLE, false],
+				[Block::PLANKS, Planks::JUNGLE, false],
+				[Block::JUNGLE_FENCE_GATE, -1],
+				[Block::FENCE, Planks::JUNGLE, false],
+				[Block::JUNGLE_STAIRS, -1],
+				[Block::WOODEN_SLAB, Planks::JUNGLE, true]
+			],
+			[
+				// (112, 112, 112)
+				[Block::STONE, -1],
+				[Block::STONE_SLAB, StoneSlab::STONE, true],
+				[Block::COBBLESTONE, -1],
+				[Block::COBBLESTONE_STAIRS, -1],
+				[Block::STONE_SLAB, StoneSlab::COBBLESTONE, true],
+				[Block::COBBLESTONE_WALL, -1],
+				[Block::MOSSY_COBBLESTONE, -1],
+				[Block::STONE, Stone::ANDESITE, false],
+				[Block::STONE, Stone::POLISHED_ANDESITE, false],
+				[Block::BEDROCK, -1],
+				[Block::GOLD_ORE, -1],
+				[Block::IRON_ORE, -1],
+				[Block::COAL_ORE, -1],
+				[Block::LAPIS_ORE, -1],
+				[Block::DISPENSER, -1],
+				[Block::DROPPER, -1],
+				[Block::STICKY_PISTON, -1],
+				[Block::PISTON, -1],
+				[Block::PISTON_ARM_COLLISION, -1],
+				[Block::MONSTER_SPAWNER, -1],
+				[Block::DIAMOND_ORE, -1],
+				[Block::FURNACE, -1],
+				[Block::STONE_PRESSURE_PLATE, -1],
+				[Block::REDSTONE_ORE, -1],
+				[Block::STONE_BRICK, -1],
+				[Block::STONE_BRICK_STAIRS, -1],
+				[Block::STONE_SLAB, StoneSlab::STONE_BRICK, true],
+				[Block::ENDER_CHEST, -1],
+				[Block::HOPPER_BLOCK, -1],
+				[Block::GRAVEL, -1],
+				[Block::OBSERVER, -1]
+			],
+			[
+				// (64, 64, 255)
+				[Block::WATER, -1],
+				[Block::STILL_WATER, -1]
+			],
+			[
+				// (104, 83, 50)
+				[Block::WOOD, Planks::OAK, false],
+				[Block::PLANKS, Planks::OAK, false],
+				[Block::FENCE, Planks::OAK, false],
+				[Block::OAK_FENCE_GATE, -1],
+				[Block::OAK_STAIRS, -1],
+				[Block::WOODEN_SLAB, Planks::OAK, true],
+				[Block::NOTEBLOCK, -1],
+				[Block::BOOKSHELF, -1],
+				[Block::CHEST, -1],
+				[Block::TRAPPED_CHEST, -1],
+				[Block::CRAFTING_TABLE, -1],
+				[Block::WOODEN_DOOR_BLOCK, -1],
+				[Block::BIRCH_DOOR_BLOCK, -1],
+				[Block::SPRUCE_DOOR_BLOCK, -1],
+				[Block::JUNGLE_DOOR_BLOCK, -1],
+				[Block::ACACIA_DOOR_BLOCK, -1],
+				[Block::DARK_OAK_DOOR_BLOCK, -1],
+				[Block::SIGN_POST, -1],
+				[Block::WALL_BANNER, -1],
+				[Block::WALL_SIGN, -1],
+				[Block::WOODEN_PRESSURE_PLATE, -1],
+				[Block::JUKEBOX, -1],
+				[Block::WOODEN_TRAPDOOR, -1],
+				[Block::BROWN_MUSHROOM_BLOCK, -1],
+				[Block::STANDING_BANNER, -1],
+				[Block::DAYLIGHT_SENSOR, -1],
+				[Block::DAYLIGHT_SENSOR_INVERTED, -1]
+			],
+			[
+				// (255, 252, 245)
+				[Block::QUARTZ_BLOCK, -1],
+				[Block::STONE_SLAB, StoneSlab::QUARTZ, true],
+				[Block::QUARTZ_STAIRS, -1],
+				[Block::STONE, Stone::DIORITE, false],
+				[Block::STONE, Stone::POLISHED_DIORITE, false],
+				[Block::SEA_LANTERN, -1]
+			],
+			[
+				// (216, 127, 51)
+				[Block::WOOL, Dye::ORANGE, false],
+				[Block::CARPET, Dye::ORANGE, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::ORANGE, false],
+				[Block::PUMPKIN, -1],
+				[Block::JACK_O_LANTERN, -1],
+				[Block::HARDENED_CLAY, -1],
+				[Block::SAND, 1, false],
+				[Block::RED_SANDSTONE, -1],
+				[Block::RED_SANDSTONE_STAIRS, -1],
+				[Block::WOOD, Planks::ACACIA, false],
+				[Block::PLANKS, Planks::ACACIA, false],
+				[Block::FENCE, Planks::ACACIA, false],
+				[Block::ACACIA_FENCE_GATE, -1],
+				[Block::ACACIA_STAIRS, -1],
+				[Block::WOODEN_SLAB, Planks::ACACIA, true]
+			],
+			[
+				// (178, 76, 216)
+				[Block::WOOL, Dye::MAGENTA, false],
+				[Block::CARPET, Dye::MAGENTA, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::MAGENTA, false],
+				[Block::PURPUR_BLOCK, -1],
+				[Block::PURPUR_STAIRS, -1]
+			],
+			[
+				// (102, 153, 216)
+				[Block::WOOL, Dye::LIGHT_BLUE, false],
+				[Block::CARPET, Dye::LIGHT_BLUE, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::LIGHT_BLUE, false]
+			],
+			[
+				// (229, 229, 51)
+				[Block::WOOL, Dye::YELLOW, false],
+				[Block::CARPET, Dye::YELLOW, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::YELLOW, false],
+				[Block::HAY_BALE, -1],
+				[Block::SPONGE, -1]
+			],
+			[
+				// (127, 204, 25)
+				[Block::WOOL, Dye::LIME, false],
+				[Block::CARPET, Dye::LIME, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::LIME, false],
+				[Block::MELON_BLOCK, -1]
+			],
+			[
+				// (242, 127, 165)
+				[Block::WOOL, Dye::PINK, false],
+				[Block::CARPET, Dye::PINK, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::PINK, false]
+			],
+			[
+				// (76, 76, 76)
+				[Block::WOOL, Dye::GRAY, false],
+				[Block::CARPET, Dye::GRAY, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::GRAY, false],
+				[Block::CAULDRON_BLOCK, -1]
+			],
+			[
+				// (153, 153, 153)
+				[Block::WOOL, Dye::LIGHT_GRAY, false],
+				[Block::CARPET, Dye::LIGHT_GRAY, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::LIGHT_GRAY, false],
+				[Block::STRUCTURE_BLOCK, -1]
+			],
+			[
+				// (76, 127, 153)
+				[Block::WOOL, Dye::CYAN, false],
+				[Block::CARPET, Dye::CYAN, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::CYAN, false],
+				[Block::PRISMARINE, Prismarine::NORMAL, false]
+			],
+			[
+				// (127, 63, 178)
+				[Block::WOOL, Dye::PURPLE, false],
+				[Block::CARPET, Dye::PURPLE, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::PURPLE, false],
+				[Block::MYCELIUM, -1],
+				[Block::REPEATING_COMMAND_BLOCK, -1],
+				[Block::CHORUS_PLANT, -1],
+				[Block::CHORUS_FLOWER, -1]
+			],
+			[
+				// (51, 76, 178)
+				[Block::WOOL, Dye::BLUE, false],
+				[Block::CARPET, Dye::BLUE, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::BLUE, false],
+			],
+			[
+				// (102, 76, 51)
+				[Block::WOOL, Dye::BROWN, false],
+				[Block::CARPET, Dye::BROWN, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::BROWN, false],
+				[Block::SOUL_SAND, -1],
+				[Block::WOOD, Planks::DARK_OAK, false],
+				[Block::PLANKS, Planks::DARK_OAK, false],
+				[Block::FENCE, Planks::DARK_OAK, false],
+				[Block::DARK_OAK_FENCE_GATE, -1],
+				[Block::DARK_OAK_STAIRS, -1],
+				[Block::WOODEN_SLAB, Planks::DARK_OAK, true],
+				[Block::COMMAND_BLOCK, -1]
+			],
+			[
+				// (102, 127, 51)
+				[Block::WOOL, Dye::GREEN, false],
+				[Block::CARPET, Dye::GREEN, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::GREEN, false],
+				[Block::END_PORTAL_FRAME, -1],
+				[Block::CHAIN_COMMAND_BLOCK, -1]
+			],
+			[
+				// (153, 51, 51)
+				[Block::WOOL, Dye::RED, false],
+				[Block::CARPET, Dye::RED, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::RED, false],
+				[Block::RED_MUSHROOM_BLOCK, -1],
+				[Block::BRICK_BLOCK, -1],
+				[Block::STONE_SLAB, StoneSlab::BRICK, true],
+				[Block::BRICK_STAIRS, -1],
+				[Block::ENCHANTING_TABLE, -1],
+				[Block::NETHER_WART_BLOCK, -1]
+			],
+			[
+				// (25, 25, 25)
+				[Block::WOOL, Dye::BLACK, false],
+				[Block::CARPET, Dye::BLACK, false],
+				[Block::STAINED_HARDENED_CLAY, Dye::BLACK, false],
+				[Block::DRAGON_EGG, -1],
+				[Block::COAL_BLOCK, -1],
+				[Block::OBSIDIAN, -1],
+				[Block::END_PORTAL_FRAME, -1],
+			],
+			[
+				// (250, 238, 77)
+				[Block::GOLD_BLOCK, -1],
+				[Block::LIGHT_WEIGHTED_PRESSURE_PLATE, -1]
+			],
+			[
+				// (92, 219, 213)
+				[Block::DIAMOND_BLOCK, -1],
+				[Block::PRISMARINE, Prismarine::DARK, false],
+				[Block::PRISMARINE, Prismarine::BRICKS, false],
+				[Block::BEACON, -1]
+			],
+			[
+				// (74, 128, 255)
+				[Block::LAPIS_BLOCK, -1]
+			],
+			[
+				// (0, 217, 58)
+				[Block::EMERALD_BLOCK, -1]
+			],
+			[
+				// (112, 2, 0)
+				[Block::NETHERRACK, -1],
+				[Block::NETHER_QUARTZ_ORE, -1],
+				[Block::NETHER_BRICK_FENCE, -1],
+				[Block::NETHER_BRICK_BLOCK, -1],
+				[Block::RED_NETHER_BRICK, -1],
+				[Block::MAGMA, -1],
+				[Block::NETHER_BRICK_STAIRS, -1],
+				[Block::STONE_SLAB, StoneSlab::NETHER_BRICK, true]
+			],
+			[
+				// (129, 86, 49)
+				[Block::PODZOL, -1],
+				[Block::WOOD, Planks::SPRUCE, false],
+				[Block::PLANKS, Planks::SPRUCE, false],
+				[Block::FENCE, Planks::SPRUCE, false],
+				[Block::SPRUCE_FENCE_GATE, -1],
+				[Block::SPRUCE_STAIRS, -1],
+				[Block::WOODEN_SLAB, Planks::SPRUCE, true]
+			]
+		];
+
+		foreach($blockColors as $index => $colors){
+			foreach($colors as $color){
+				if($color[0] === $id){
+					if($color[1] === -1){
+						return self::$BaseMapColors[$index];
+					}else{
+						if($color[1] === $meta){
+							return self::$BaseMapColors[$index];
+						}
+					}
+				}
+			}
 		}
+
+		return new Color(0, 0, 0);
 	}
 }
