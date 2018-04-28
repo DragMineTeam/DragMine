@@ -943,6 +943,7 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$this->batchDataPacket($pk);
 		}
 
+
 		if($this->spawned){
 			foreach($this->level->getChunkEntities($x, $z) as $entity){
 				if($entity !== $this and !$entity->isClosed() and $entity->isAlive()){
@@ -3777,6 +3778,10 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 			$this->stopSleep();
 
 			$this->isTeleporting = true;
+
+			//TODO: workaround for player last pos not getting updated
+			//Entity::updateMovement() normally handles this, but it's overridden with an empty function in Player
+			$this->resetLastMovements();
 
 			return true;
 		}

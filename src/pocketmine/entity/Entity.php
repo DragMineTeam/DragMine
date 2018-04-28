@@ -1895,14 +1895,16 @@ abstract class Entity extends Location implements Metadatable{
 			$this->resetFallDistance();
 			$this->onGround = true;
 
+			/*
 			$this->lastX = $this->x;
 			$this->lastY = $this->y;
 			$this->lastZ = $this->z;
 
 			$this->lastYaw = $this->yaw;
 			$this->lastPitch = $this->pitch;
+			*/
 
-			$this->updateMovement();
+			$this->updateMovement(true);
 
 			return true;
 		}
