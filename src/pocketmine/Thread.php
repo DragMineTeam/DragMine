@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace pocketmine;
 
+use spl\ClassLoader;
+use spl\BaseClassLoader;
+
 /**
  * This class must be extended by all custom threading classes
  */
@@ -51,11 +54,6 @@ abstract class Thread extends \Thread{
 	 * (unless you are using a custom autoloader).
 	 */
 	public function registerClassLoader(){
-		require(\pocketmine\PATH . "vendor/autoload.php");
-		if(!interface_exists("ClassLoader", false)){
-			require(\pocketmine\PATH . "src/spl/ClassLoader.php");
-			require(\pocketmine\PATH . "src/spl/BaseClassLoader.php");
-		}
 		if($this->classLoader !== null){
 			$this->classLoader->register(false);
 		}
