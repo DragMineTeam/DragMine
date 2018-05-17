@@ -37,13 +37,15 @@ class AvailableCommandsPacket extends DataPacket{
 	const ARG_TYPE_INT = 0x01;
 	const ARG_TYPE_FLOAT = 0x02;
 	const ARG_TYPE_VALUE = 0x03;
-	const ARG_TYPE_TARGET = 0x04;
-	const ARG_TYPE_STRING = 0x0d;
-	const ARG_TYPE_POSITION = 0x0e;
-	const ARG_TYPE_RAWTEXT = 0x11;
-	const ARG_TYPE_TEXT = 0x13;
-	const ARG_TYPE_JSON = 0x16;
-	const ARG_TYPE_COMMAND = 0x1d;
+	const ARG_TYPE_WILDCARD_INT = 0x04;
+	const ARG_TYPE_TARGET = 0x05;
+	const ARG_TYPE_WILDCARD_TARGET = 0x06;
+	const ARG_TYPE_STRING   = 0x0f;
+	const ARG_TYPE_POSITION = 0x10;
+	const ARG_TYPE_MESSAGE = 0x13;
+	const ARG_TYPE_RAWTEXT = 0x15;
+	const ARG_TYPE_JSON = 0x18;
+	const ARG_TYPE_COMMAND = 0x1f;
 
 	public $commands = [];
 
@@ -65,14 +67,14 @@ class AvailableCommandsPacket extends DataPacket{
 				return self::ARG_TYPE_STRING;
 			case "xyz":
 				return self::ARG_TYPE_POSITION;
-			case "rawtext":
-				return self::ARG_TYPE_RAWTEXT;
 			case "text":
 				return self::ARG_TYPE_TEXT;
 			case "json":
 				return self::ARG_TYPE_JSON;
 			case "command":
 				return self::ARG_TYPE_COMMAND;
+			case "message":
+				return self::ARG_TYPE_MESSAGE;
 		}
 		return 0;
 	}
