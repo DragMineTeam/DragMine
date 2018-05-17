@@ -931,14 +931,6 @@ class Chunk{
 		        .  chr(0); //border block array count
 		//Border block entry format: 1 byte (4 bits X, 4 bits Z). These are however useless since they crash the regular client.
 
-		$extraData = new BinaryStream();
-		$extraData->putVarInt(count($this->extraData)); //WHY, Mojang, WHY
-		foreach($this->extraData as $key => $value){
-			$extraData->putVarInt($key);
-			$extraData->putLShort($value);
-		}
-		$result .= $extraData->getBuffer();
-
 		if(count($this->tiles) > 0){
 			$nbt = new NBT(NBT::LITTLE_ENDIAN);
 			$list = [];
