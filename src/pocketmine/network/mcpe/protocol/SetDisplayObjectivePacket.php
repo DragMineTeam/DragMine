@@ -49,11 +49,11 @@ class SetDisplayObjectivePacket extends DataPacket{
 	}
 
 	protected function encodePayload(){
-  	$this->putString($this->displaySlot);
+	  	$this->putString($this->displaySlot);
 		$this->putString($this->objectiveName);
 		$this->putString($this->displayName);
 		$this->putString($this->criteriaName);
-  	$this->putVarInt($this->sortOrder);
+  		$this->putVarInt($this->sortOrder);
 	}
 
 	public function handle(NetworkSession $session) : bool{

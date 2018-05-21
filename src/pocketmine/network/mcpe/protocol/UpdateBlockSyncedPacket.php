@@ -36,18 +36,18 @@ class UpdateBlockSyncedPacket extends UpdateBlockPacket{
 	protected $uvarint64_2 = 0;
 
 	protected function decodePayload(){
-        		parent::decodePayload();
-        		$this->uvarint64_1 = $this->getUnsignedVarLong();
-        		$this->uvarint64_2 = $this->getUnsignedVarLong();
-        	}
+        	parent::decodePayload();
+       		$this->uvarint64_1 = $this->getUnsignedVarLong();
+        	$this->uvarint64_2 = $this->getUnsignedVarLong();
+       	}
 
 	protected function encodePayload(){
-        		parent::encodePayload();
-        		$this->putUnsignedVarLong($this->uvarint64_1);
-        		$this->putUnsignedVarLong($this->uvarint64_2);
-        	}
+        	parent::encodePayload();
+        	$this->putUnsignedVarLong($this->uvarint64_1);
+       		$this->putUnsignedVarLong($this->uvarint64_2);
+       	}
 
 	public function handle(NetworkSession $session) : bool{
-        		return $session->handleUpdateBlockSynced($this);
+        	return $session->handleUpdateBlockSynced($this);
 	}
 }
