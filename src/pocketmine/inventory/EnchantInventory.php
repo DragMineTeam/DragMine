@@ -26,10 +26,10 @@ namespace pocketmine\inventory;
 use pocketmine\level\Position;
 use pocketmine\network\mcpe\protocol\types\WindowTypes;
 use pocketmine\Player;
+use pocketmine\tile\EnchantTable;
 
 class EnchantInventory extends ContainerInventory{
 
-	/** @var FakeBlockMenu */
 	protected $holder;
 
 	public function __construct(Position $pos){
@@ -48,10 +48,6 @@ class EnchantInventory extends ContainerInventory{
 		return 2; //1 input, 1 lapis
 	}
 
-	/**
-	 * This override is here for documentation and code completion purposes only.
-	 * @return FakeBlockMenu
-	 */
 	public function getHolder(){
 		return $this->holder;
 	}
@@ -59,9 +55,16 @@ class EnchantInventory extends ContainerInventory{
 	public function onClose(Player $who) : void{
 		parent::onClose($who);
 
-		for($i = 0; $i < 2; ++$i){
-			$this->getHolder()->getLevel()->dropItem($this->getHolder()->add(0.5, 0.5, 0.5), $this->getItem($i));
-			$this->clear($i);
+		$inventory = $who->getInventory();
+		for($i=0,$size=$this->getDefaultSize();$i<$size;++$i){
+			$item = $this->getItem($i);
+			if(!$item->isNull()){
+				if($inventory->canAddItem($item)){
+					$inventory->addItem($item);
+				}else{
+					$who->dropItem($item);
+				}
+			}
 		}
 	}
 }

@@ -30,8 +30,9 @@ use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\StringTag;
-use pocketmine\Player;
+use pocketmine\tile\EnchantTable as TileEnchantTable;
 use pocketmine\tile\Tile;
+use pocketmine\Player;
 
 class EnchantingTable extends Transparent{
 
@@ -83,9 +84,11 @@ class EnchantingTable extends Transparent{
 
 	public function onActivate(Item $item, Player $player = null) : bool{
 		if($player instanceof Player){
-			//TODO lock
 
-			$player->addWindow(new EnchantInventory($this));
+			$tile = $player->getLevel()->getTile($this);
+			if($tile instanceof TileEnchantTable){
+				$player->addWindow(new EnchantInventory($this));
+			}
 		}
 
 		return true;

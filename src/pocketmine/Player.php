@@ -3881,6 +3881,21 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	}
 
 	/**
+	 * Returns the opened inventory type that is opened, or null if no window is opened.
+	 *
+	 * @param string $class
+	 * @return null|Inventory
+	 */
+	public function getWindowByType(string $class) : ?Inventory{
+		foreach($this->windowIndex as $inventory){
+			if($inventory instanceof $class){
+				return $inventory;
+			}
+		}
+		return null;
+	}
+
+	/**
 	 * Opens an inventory window to the player. Returns the ID of the created window, or the existing window ID if the
 	 * player is already viewing the specified inventory.
 	 *

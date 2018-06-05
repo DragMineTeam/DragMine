@@ -23,10 +23,14 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types;
 
+use pocketmine\inventory\AnvilInventory;
+use pocketmine\inventory\EnchantInventory;
+use pocketmine\inventory\transaction\action\AnvilAction;
 use pocketmine\inventory\transaction\action\CraftingTakeResultAction;
 use pocketmine\inventory\transaction\action\CraftingTransferMaterialAction;
 use pocketmine\inventory\transaction\action\CreativeInventoryAction;
 use pocketmine\inventory\transaction\action\DropItemAction;
+use pocketmine\inventory\transaction\action\EnchantAction;
 use pocketmine\inventory\transaction\action\InventoryAction;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
@@ -213,6 +217,28 @@ class NetworkInventoryAction{
 							return null;
 						}
 						return new SlotChangeAction($window, $inventorySlot, $this->oldItem, $this->newItem);
+
+					case self::SOURCE_TYPE_ANVIL_INPUT:
+						$window = $player->getWindowByType(AnvilInventory::class);
+						return new AnvilAction($window, 0, $this->oldItem, $this->newItem);
+					case self::SOURCE_TYPE_ANVIL_MATERIAL:
+						$window = $player->getWindowByType(AnvilInventory::class);
+						return new AnvilAction($window, 1, $this->oldItem, $this->newItem);
+					case self::SOURCE_TYPE_ANVIL_RESULT:
+						$window = $player->getWindowByType(AnvilInventory::class);
+						$air = Item::get(0);
+						$window->setContents([$air, $air, $this->oldItem], false);
+						return new AnvilAction($window, 2, $this->oldItem, $this->newItem);
+
+					case self::SOURCE_TYPE_ENCHANT_INPUT:
+						$window = $player->getWindowByType(EnchantInventory::class);
+						return new EnchantAction($window, 0, $this->oldItem, $this->newItem);
+					case self::SOURCE_TYPE_ENCHANT_MATERIAL:
+						$window = $player->getWindowByType(EnchantInventory::class);
+						return new EnchantAction($window, 1, $this->oldItem, $this->newItem);
+					case self::SOURCE_TYPE_ENCHANT_OUTPUT:
+						$window = $player->getWindowByType(EnchantInventory::class);
+						return new EnchantAction($window, $this->inventorySlot, $this->oldItem, $this->newItem);
 				}
 
 				//TODO: more stuff

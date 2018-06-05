@@ -59,9 +59,16 @@ class AnvilInventory extends ContainerInventory{
 	public function onClose(Player $who) : void{
 		parent::onClose($who);
 
-		for($i = 0; $i < 2; ++$i){
-			$this->getHolder()->getLevel()->dropItem($this->getHolder()->add(0.5, 0.5, 0.5), $this->getItem($i));
-			$this->clear($i);
+		$inventory = $who->getInventory();
+		for($i=0,$size=$this->getDefaultSize();$i<$size;++$i){
+			$item = $this->getItem($i);
+			if(!$item->isNull()){
+				if($inventory->canAddItem($item)){
+					$inventory->addItem($item);
+				}else{
+					$who->dropItem($item);
+				}
+			}
 		}
 	}
 }
