@@ -124,6 +124,7 @@ namespace pocketmine {
 	}
 
 	define('pocketmine\COMPOSER_AUTOLOADER_PATH', \pocketmine\PATH . 'vendor/autoload.php');
+
 	function composer_error_die($message){
 		critical_error($message);
 		critical_error("Please install/update Composer dependencies or use provided builds.");
@@ -136,29 +137,11 @@ namespace pocketmine {
 		composer_error_die("Composer autoloader not found.");
 	}
 
-	$requiredSplVer = "0.0.1";
-	if(!is_file(\pocketmine\PATH . "src/spl/version.php")){
-		echo "[CRITICAL] Cannot find PocketMine-SPL or incompatible version." . PHP_EOL;
-		echo "[CRITICAL] Please update your submodules or use provided builds." . PHP_EOL;
-		exit(1);
-	}elseif(version_compare($requiredSplVer, require(\pocketmine\PATH . "src/spl/version.php")) > 0){
-		echo "[CRITICAL] Incompatible PocketMine-SPL submodule version ($requiredSplVer is required)." . PHP_EOL;
-		echo "[CRITICAL] Please update your submodules or use provided builds." . PHP_EOL;
-		exit(1);
-	}
-
-	if(!class_exists("ClassLoader", false)){
-		require_once(\pocketmine\PATH . "src/spl/ClassLoader.php");
-		require_once(\pocketmine\PATH . "src/spl/BaseClassLoader.php");
-	}
-
 	/*
 	 * We now use the Composer autoloader, but this autoloader is still used by RakLib and for loading plugins.
 	 */
 	$autoloader = new \BaseClassLoader();
-	$autoloader->addPath(\pocketmine\PATH . "src");
-	$autoloader->addPath(\pocketmine\PATH . "src" . DIRECTORY_SEPARATOR . "spl");
-	$autoloader->register(true);
+	$autoloader->register(false);
 
 	if(!class_exists(RakLib::class)){
 		echo "[CRITICAL] Unable to find the RakLib library." . PHP_EOL;

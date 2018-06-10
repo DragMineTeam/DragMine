@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "content-hash": "c0bdef291b51cf93d92b275247b90b3c",
+    "content-hash": "68aa1e56be591a71f30425a82ac3c3c3",
     "packages": [
         {
             "name": "pocketmine/binaryutils",
@@ -39,46 +39,6 @@
                 "issues": "https://github.com/pmmp/BinaryUtils/issues"
             },
             "time": "2018-04-16T09:05:08+00:00"
-        },
-        {
-            "name": "pocketmine/nbt",
-            "version": "dev-master",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/pmmp/NBT.git",
-                "reference": "09809564c7e58c322dcefc6905ab333313e05d1f"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/pmmp/NBT/zipball/09809564c7e58c322dcefc6905ab333313e05d1f",
-                "reference": "09809564c7e58c322dcefc6905ab333313e05d1f",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=7.2.0",
-                "php-64bit": "*",
-                "pocketmine/binaryutils": "dev-master#c824ac67eeeb6899c2a9ec91a769eb9ed6e3f595"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-4": {
-                    "pocketmine\\nbt\\": "src/"
-                }
-            },
-            "autoload-dev": {
-                "psr-4": {
-                    "pocketmine\\nbt\\": "tests/phpunit/"
-                }
-            },
-            "license": [
-                "LGPL-3.0"
-            ],
-            "description": "PHP library for working with Named Binary Tags",
-            "support": {
-                "source": "https://github.com/pmmp/NBT/tree/master",
-                "issues": "https://github.com/pmmp/NBT/issues"
-            },
-            "time": "2018-04-16T09:13:27+00:00"
         },
         {
             "name": "pocketmine/raklib",
@@ -195,7 +155,6 @@
         "ext-pthreads": 20,
         "pocketmine/raklib": 20,
         "pocketmine/binaryutils": 20,
-        "pocketmine/nbt": 20,
         "pocketmine/snooze": 20
     },
     "prefer-stable": false,
