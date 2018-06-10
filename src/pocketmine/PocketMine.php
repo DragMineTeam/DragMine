@@ -80,9 +80,9 @@ namespace pocketmine {
 	use raklib\RakLib;
 
 	const NAME = "DragMine";
-	const VERSION = "1.2dev";
+	const VERSION = "1.3dev";
 	const API_VERSION = "3.0.0-ALPHA9";
-	const CODENAME = "DragonBreath";
+	const CODENAME = "Sky of Darkness";
 
 	/*
 	 * Startup code. Do not look at it, it may harm you.
