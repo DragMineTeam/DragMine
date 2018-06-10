@@ -30,7 +30,7 @@ use pocketmine\network\mcpe\NetworkSession;
 #ifndef COMPILE
 use pocketmine\utils\Binary;
 #endif
-use pocketmine\utils\BinaryStream;
+use pocketmine\network\mcpe\NetworkBinaryStream;
 
 class BatchPacket extends DataPacket{
 	const NETWORK_ID = 0xfe;
@@ -88,7 +88,7 @@ class BatchPacket extends DataPacket{
 	 * @return \Generator
 	 */
 	public function getPackets(){
-		$stream = new BinaryStream($this->payload);
+		$stream = new NetworkBinaryStream($this->payload);
 		while(!$stream->feof()){
 			yield $stream->getString();
 		}

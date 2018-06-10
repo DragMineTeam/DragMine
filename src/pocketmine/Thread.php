@@ -23,9 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine;
 
-use spl\ClassLoader;
-use spl\BaseClassLoader;
-
 /**
  * This class must be extended by all custom threading classes
  */
@@ -33,6 +30,9 @@ abstract class Thread extends \Thread{
 
 	/** @var \ClassLoader */
 	protected $classLoader;
+	/** @var string|null */
+	protected $composerAutoloaderPath;
+
 	protected $isKilled = false;
 
 	public function getClassLoader(){
@@ -40,6 +40,8 @@ abstract class Thread extends \Thread{
 	}
 
 	public function setClassLoader(\ClassLoader $loader = null){
+		$this->composerAutoloaderPath = \pocketmine\COMPOSER_AUTOLOADER_PATH;
+
 		if($loader === null){
 			$loader = Server::getInstance()->getLoader();
 		}
@@ -54,6 +56,9 @@ abstract class Thread extends \Thread{
 	 * (unless you are using a custom autoloader).
 	 */
 	public function registerClassLoader(){
+		if($this->composerAutoloaderPath !== null){
+			require $this->composerAutoloaderPath;
+		}
 		if($this->classLoader !== null){
 			$this->classLoader->register(false);
 		}

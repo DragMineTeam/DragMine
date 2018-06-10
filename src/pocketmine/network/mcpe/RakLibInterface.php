@@ -33,14 +33,18 @@ use pocketmine\network\Network;
 use pocketmine\utils\TextFormat;
 use pocketmine\Player;
 use pocketmine\Server;
+use pocketmine\snooze\SleeperNotifier;
 use raklib\protocol\EncapsulatedPacket;
 use raklib\protocol\PacketReliability;
 use raklib\RakLib;
 use raklib\server\RakLibServer;
 use raklib\server\ServerHandler;
 use raklib\server\ServerInstance;
+use raklib\utils\InternetAddress;
 
 class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
+
+	private const MCPE_RAKNET_PROTOCOL_VERSION = 8;
 
 	/** @var Server */
 	private $server;
@@ -63,10 +67,25 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 	/** @var ServerHandler */
 	private $interface;
 
+	/** @var SleeperNotifier */
+	private $sleeper;
+
 	public function __construct(Server $server){
 		$this->server = $server;
 
-		$this->rakLib = new RakLibServer($this->server->getLogger(), $this->server->getLoader(), $this->server->getPort(), $this->server->getIp() === "" ? "0.0.0.0" : $this->server->getIp(), false);
+		$this->sleeper = new SleeperNotifier();
+		$server->getTickSleeper()->addNotifier($this->sleeper, function() : void{
+			$this->server->getNetwork()->processInterface($this);
+		});
+
+		$this->rakLib = new RakLibServer(
+			$this->server->getLogger(),
+			\pocketmine\COMPOSER_AUTOLOADER_PATH,
+			new InternetAddress($this->server->getIp(), $this->server->getPort(), 4),
+			(int) $this->server->getProperty("network.max-mtu-size", 1492),
+			self::MCPE_RAKNET_PROTOCOL_VERSION,
+			$this->sleeper
+		);
 		$this->interface = new ServerHandler($this->rakLib, $this);
 	}
 
@@ -95,7 +114,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		return $work;
 	}
 
-	public function closeSession($identifier, $reason){
+	public function closeSession(string $identifier, string $reason) : void{
 		if(isset($this->players[$identifier])){
 			$player = $this->players[$identifier];
 			unset($this->identifiers[spl_object_hash($player)]);
@@ -122,7 +141,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		$this->interface->emergencyShutdown();
 	}
 
-	public function openSession($identifier, $address, $port, $clientID){
+	public function openSession(string $identifier, string $address, int $port, int $clientID) : void{
 		$ev = new PlayerCreationEvent($this, Player::class, Player::class, null, $address, $port);
 		$this->server->getPluginManager()->callEvent($ev);
 		$class = $ev->getPlayerClass();
@@ -134,7 +153,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		$this->server->addPlayer($identifier, $player);
 	}
 
-	public function handleEncapsulated($identifier, EncapsulatedPacket $packet, $flags){
+	public function handleEncapsulated(string $identifier, EncapsulatedPacket $packet, int $flags) : void{
 		if(isset($this->players[$identifier])){
 			//get this now for blocking in case the player was closed before the exception was raised
 			$address = $this->players[$identifier]->getAddress();
@@ -161,7 +180,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		$this->interface->unblockAddress($address);
 	}
 
-	public function handleRaw($address, $port, $payload){
+	public function handleRaw(string $address, int $port, string $payload) : void{
 		$this->server->handlePacket($address, $port, $payload);
 	}
 
@@ -176,7 +195,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		$this->interface->sendRaw($address, $port, $payload);
 	}
 
-	public function notifyACK($identifier, $identifierACK){
+	public function notifyACK(string $identifier, int $identifierACK) : void{
 
 	}
 
@@ -204,7 +223,7 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		$this->interface->sendOption("portChecking", (bool) $name);
 	}
 
-	public function handleOption($name, $value){
+	public function handleOption(string $name, string $value) : void{
 		if($name === "bandwidth"){
 			$v = unserialize($value);
 			$this->network->addStatistics($v["up"], $v["down"]);
@@ -245,6 +264,11 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		}
 
 		return null;
+	}
+
+	public function updatePing(string $identifier, int $pingMS) : void{		if(isset($this->players[$identifier])){
+			$this->players[$identifier]->updatePing($pingMS);
+		}
 	}
 
 	private function getPacket($buffer){

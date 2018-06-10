@@ -315,6 +315,12 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 	private $batchedPackets = [];
 
+	/**
+	 * @var int
+	 * Last measurement of player's latency in milliseconds.
+	 */
+	protected $lastPingMeasure = 1;
+
 	/** @var PermissibleBase */
 	private $perm = null;
 
@@ -822,6 +828,27 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	 */
 	public function getPort() : int{
 		return $this->port;
+	}
+
+	/**
+	 * Returns the last measured latency for this player, in milliseconds. This is measured automatically and reported
+	 * back by the network interface.
+	 *
+	 * @return int
+	 */
+	public function getPing() : int{
+		return $this->lastPingMeasure;
+	}
+
+	/**
+	 * Updates the player's last ping measurement.
+	 *
+	 * @internal Plugins should not use this method.
+	 *
+	 * @param int $pingMS
+	 */
+	public function updatePing(int $pingMS){
+		$this->lastPingMeasure = $pingMS;
 	}
 
 	/**
@@ -3981,14 +4008,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 	public function removeMetadata(string $metadataKey, Plugin $owningPlugin){
 		$this->server->getPlayerMetadata()->removeMetadata($this, $metadataKey, $owningPlugin);
-	}
-
-	public function setPing(int $ping){
-		$this->ping = $ping;
-	}
-
-	public function getPing() : int{
-		return $this->ping;
 	}
 
 	public function onChunkChanged(Chunk $chunk){

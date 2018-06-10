@@ -1,0 +1,57 @@
+{
+   "name": "DragMineTeam/DragMine",
+   "description": "A server software for Minecraft: Pocket Edition written in PHP",
+   "type": "project",
+   "license": "LGPL-3.0",
+   "require": {
+      "php": ">=7.2.0",
+      "php-64bit": "*",
+      "ext-bcmath": "*",
+      "ext-curl": "*",
+      "ext-hash": "*",
+      "ext-json": "*",
+      "ext-mbstring": "*",
+      "ext-openssl": "*",
+      "ext-pcre": "*",
+      "ext-phar": "*",
+      "ext-pthreads": ">=3.1.7dev",
+      "ext-reflection": "*",
+      "ext-sockets": "*",
+      "ext-spl": "*",
+      "ext-yaml": ">=2.0.0",
+      "ext-zip": "*",
+      "ext-zlib": ">=1.2.11",
+      	"pocketmine/raklib": "dev-master#bfee6ba312a380a5451a2d8e85b46c2c57acac15",
+	"pocketmine/spl": "0.3.0",
+	"pocketmine/binaryutils": "dev-master#c824ac67eeeb6899c2a9ec91a769eb9ed6e3f595",
+	"pocketmine/nbt": "dev-master#09809564c7e58c322dcefc6905ab333313e05d1f",
+	"pocketmine/snooze": "dev-master#541f0f038f401e9117ae60c8dbc167a46569282d"
+   },
+   "autoload": {
+      "psr-4": {
+         "": ["src"]
+      }
+   },
+   "repositories": [
+      {
+         "type": "vcs",
+         "url": "https://github.com/pmmp/RakLib"
+      },
+      {
+         "type": "vcs",
+         "url": "https://github.com/pmmp/SPL"
+      },
+      {
+         "type": "vcs",
+         "url": "https://github.com/pmmp/BinaryUtils"
+      },
+      {
+         "type": "vcs",
+         "url": "https://github.com/pmmp/NBT"
+      },
+      {
+         "type": "vcs",
+         "url": "https://github.com/pmmp/Snooze"
+      }
+   ]
+}

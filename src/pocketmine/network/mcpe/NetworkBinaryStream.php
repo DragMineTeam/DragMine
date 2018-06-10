@@ -21,130 +21,99 @@
 
 declare(strict_types=1);
 
-namespace pocketmine\network\mcpe\protocol;
+namespace pocketmine\network\mcpe;
 
 #include <rules/DataPacket.h>
 
 use pocketmine\entity\Attribute;
 use pocketmine\entity\Entity;
+use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\NetworkBinaryStream;
-use pocketmine\network\mcpe\NetworkSession;
-use pocketmine\utils\Utils;
+use pocketmine\network\mcpe\protocol\types\CommandOriginData;
+use pocketmine\network\mcpe\protocol\types\EntityLink;
+use pocketmine\utils\BinaryStream;
+use pocketmine\utils\UUID;
 
+class NetworkBinaryStream extends BinaryStream{
 
-abstract class DataPacket extends NetworkBinaryStream{
-
-	const NETWORK_ID = 0;
-
-	/** @var bool */
-	public $isEncoded = false;
-
-	/** @var int */
-	public $extraByte1 = 0;
-	/** @var int */
-	public $extraByte2 = 0;
-
-	public function pid(){
-		return $this::NETWORK_ID;
+	public function getString() : string{
+		return $this->get($this->getUnsignedVarInt());
 	}
 
-	public function getName() : string{
-		return (new \ReflectionClass($this))->getShortName();
+	public function putString(string $v) : void{
+		$this->putUnsignedVarInt(strlen($v));
+		$this->put($v);
 	}
 
-	public function canBeBatched() : bool{
-		return true;
+	public function getUUID() : UUID{
+		//This is actually two little-endian longs: UUID Most followed by UUID Least
+		$part1 = $this->getLInt();
+		$part0 = $this->getLInt();
+		$part3 = $this->getLInt();
+		$part2 = $this->getLInt();
+
+		return new UUID($part0, $part1, $part2, $part3);
 	}
 
-	public function canBeSentBeforeLogin() : bool{
-		return false;
+	public function putUUID(UUID $uuid) : void{
+		$this->putLInt($uuid->getPart(1));
+		$this->putLInt($uuid->getPart(0));
+		$this->putLInt($uuid->getPart(3));
+		$this->putLInt($uuid->getPart(2));
 	}
 
-	/**
-	 * Returns whether the packet may legally have unread bytes left in the buffer.
-	 * @return bool
-	 */
-	public function mayHaveUnreadBytes() : bool{
-		return false;
-	}
-
-	public function decode(){
-		$this->offset = 0;
-		$this->decodeHeader();
-		$this->decodePayload();
-	}
-
-	protected function decodeHeader(){
-		$pid = $this->getUnsignedVarInt();
-		assert($pid === static::NETWORK_ID);
-
-		$this->extraByte1 = $this->getByte();
-		$this->extraByte2 = $this->getByte();
-		assert($this->extraByte1 === 0 and $this->extraByte2 === 0, "Got unexpected non-zero split-screen bytes (byte1: $this->extraByte1, byte2: $this->extraByte2");
-	}
-
-	/**
-	 * Note for plugin developers: If you're adding your own packets, you should perform decoding in here.
-	 */
-	protected function decodePayload(){
-
-	}
-
-	public function encode(){
-		$this->reset();
-		$this->encodeHeader();
-		$this->encodePayload();
-		$this->isEncoded = true;
-	}
-
-	protected function encodeHeader(){
-		$this->putUnsignedVarInt(static::NETWORK_ID);
-
-		$this->putByte($this->extraByte1);
-		$this->putByte($this->extraByte2);
-	}
-
-	/**
-	 * Note for plugin developers: If you're adding your own packets, you should perform encoding in here.
-	 */
-	protected function encodePayload(){
-
-	}
-
-	/**
-	 * Performs handling for this packet. Usually you'll want an appropriately named method in the NetworkSession for this.
-	 *
-	 * This method returns a bool to indicate whether the packet was handled or not. If the packet was unhandled, a debug message will be logged with a hexdump of the packet.
-	 * Typically this method returns the return value of the handler in the supplied NetworkSession. See other packets for examples how to implement this.
-	 *
-	 * @param NetworkSession $session
-	 *
-	 * @return bool true if the packet was handled successfully, false if not.
-	 */
-	abstract public function handle(NetworkSession $session) : bool;
-
-	public function clean(){
-		$this->buffer = null;
-		$this->isEncoded = false;
-		$this->offset = 0;
-		return $this;
-	}
-
-	public function __debugInfo(){
-		$data = [];
-		foreach($this as $k => $v){
-			if($k === "buffer" and is_string($v)){
-				$data[$k] = bin2hex($v);
-			}elseif(is_string($v) or (is_object($v) and method_exists($v, "__toString"))){
-				$data[$k] = Utils::printable((string) $v);
-			}else{
-				$data[$k] = $v;
-			}
+	public function getSlot() : Item{
+		$id = $this->getVarInt();
+		if($id === 0){
+			return ItemFactory::get(0, 0, 0);
 		}
 
-		return $data;
+		$auxValue = $this->getVarInt();
+		$data = $auxValue >> 8;
+		if($data === 0x7fff){
+			$data = -1;
+		}
+		$cnt = $auxValue & 0xff;
+
+		$nbtLen = $this->getLShort();
+		$nbt = "";
+
+		if($nbtLen > 0){
+			$nbt = $this->get($nbtLen);
+		}
+
+		//TODO
+		for($i = 0, $canPlaceOn = $this->getVarInt(); $i < $canPlaceOn; ++$i){
+			$this->getString();
+		}
+
+		//TODO
+		for($i = 0, $canDestroy = $this->getVarInt(); $i < $canDestroy; ++$i){
+			$this->getString();
+		}
+
+		return ItemFactory::get($id, $data, $cnt, $nbt);
+	}
+
+
+	public function putSlot(Item $item) : void{
+		if($item->getId() === 0){
+			$this->putVarInt(0);
+
+			return;
+		}
+
+		$this->putVarInt($item->getId());
+		$auxValue = (($item->getDamage() & 0x7fff) << 8) | $item->getCount();
+		$this->putVarInt($auxValue);
+
+		$nbt = $item->getCompoundTag();
+		$this->putLShort(strlen($nbt));
+		$this->put($nbt);
+
+		$this->putVarInt(0); //CanPlaceOn entry count (TODO)
+		$this->putVarInt(0); //CanDestroy entry count (TODO)
 	}
 
 	/**
@@ -178,28 +147,22 @@ abstract class DataPacket extends NetworkBinaryStream{
 					$value = $this->getString();
 					break;
 				case Entity::DATA_TYPE_SLOT:
-					//TODO: use objects directly
-					$value = [];
-					$item = $this->getSlot();
-					$value[0] = $item->getId();
-					$value[1] = $item->getCount();
-					$value[2] = $item->getDamage();
+					$value = $this->getSlot();
 					break;
 				case Entity::DATA_TYPE_POS:
-					$value = [0, 0, 0];
-					$this->getSignedBlockPosition(...$value);
+					$value = new Vector3();
+					$this->getSignedBlockPosition($value->x, $value->y, $value->z);
 					break;
 				case Entity::DATA_TYPE_LONG:
 					$value = $this->getVarLong();
 					break;
 				case Entity::DATA_TYPE_VECTOR3F:
-					$value = [0.0, 0.0, 0.0];
-					$this->getVector3f(...$value);
+					$value = $this->getVector3();
 					break;
 				default:
-					$value = [];
+					throw new \UnexpectedValueException("Invalid data type " . $type);
 			}
-			if($types === true){
+			if($types){
 				$data[$key] = [$type, $value];
 			}else{
 				$data[$key] = $value;
@@ -236,19 +199,24 @@ abstract class DataPacket extends NetworkBinaryStream{
 					$this->putString($d[1]);
 					break;
 				case Entity::DATA_TYPE_SLOT:
-					//TODO: change this implementation (use objects)
-					$this->putSlot(ItemFactory::get($d[1][0], $d[1][2], $d[1][1])); //ID, damage, count
+					$this->putSlot($d[1]);
 					break;
 				case Entity::DATA_TYPE_POS:
-					//TODO: change this implementation (use objects)
-					$this->putSignedBlockPosition(...$d[1]);
+					$v = $d[1];
+					if($v !== null){
+						$this->putSignedBlockPosition($v->x, $v->y, $v->z);
+					}else{
+						$this->putSignedBlockPosition(0, 0, 0);
+					}
 					break;
 				case Entity::DATA_TYPE_LONG:
 					$this->putVarLong($d[1]);
 					break;
 				case Entity::DATA_TYPE_VECTOR3F:
-					//TODO: change this implementation (use objects)
-					$this->putVector3f(...$d[1]); //x, y, z
+					$this->putVector3Nullable($d[1]);
+					break;
+				default:
+					throw new \UnexpectedValueException("Invalid data type " . $d[0]);
 			}
 		}
 	}
@@ -288,7 +256,8 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Writes a list of Attributes to the packet buffer using the standard format.
-	 * @param Attribute[] ...$attributes
+	 *
+	 * @param Attribute ...$attributes
 	 */
 	public function putAttributeList(Attribute ...$attributes) : void{
 		$this->putUnsignedVarInt(count($attributes));
@@ -311,6 +280,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Writes an EntityUniqueID
+	 *
 	 * @param int $eid
 	 */
 	public function putEntityUniqueId(int $eid) : void{
@@ -327,6 +297,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Writes an EntityUniqueID
+	 *
 	 * @param int $eid
 	 */
 	public function putEntityRuntimeId(int $eid) : void{
@@ -335,6 +306,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Reads an block position with unsigned Y coordinate.
+	 *
 	 * @param int &$x
 	 * @param int &$y
 	 * @param int &$z
@@ -347,6 +319,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Writes a block position with unsigned Y coordinate.
+	 *
 	 * @param int $x
 	 * @param int $y
 	 * @param int $z
@@ -359,6 +332,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Reads a block position with a signed Y coordinate.
+	 *
 	 * @param int &$x
 	 * @param int &$y
 	 * @param int &$z
@@ -371,6 +345,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Writes a block position with a signed Y coordinate.
+	 *
 	 * @param int $x
 	 * @param int $y
 	 * @param int $z
@@ -382,36 +357,11 @@ abstract class DataPacket extends NetworkBinaryStream{
 	}
 
 	/**
-	 * Reads a floating-point vector3 rounded to 4dp.
-	 * @param float $x
-	 * @param float $y
-	 * @param float $z
-	 */
-	public function getVector3f(&$x, &$y, &$z) : void{
-		$x = $this->getRoundedLFloat(4);
-		$y = $this->getRoundedLFloat(4);
-		$z = $this->getRoundedLFloat(4);
-	}
-
-	/**
-	 * Writes a floating-point vector3
-	 * @param float $x
-	 * @param float $y
-	 * @param float $z
-	 */
-	public function putVector3f(float $x, float $y, float $z) : void{
-		$this->putLFloat($x);
-		$this->putLFloat($y);
-		$this->putLFloat($z);
-	}
-
-	/**
-	 * Reads a floating-point Vector3 object
-	 * TODO: get rid of primitive methods and replace with this
+	 * Reads a floating-point Vector3 object with coordinates rounded to 4 decimal places.
 	 *
 	 * @return Vector3
 	 */
-	public function getVector3Obj() : Vector3{
+	public function getVector3() : Vector3{
 		return new Vector3(
 			$this->getRoundedLFloat(4),
 			$this->getRoundedLFloat(4),
@@ -423,13 +373,15 @@ abstract class DataPacket extends NetworkBinaryStream{
 	 * Writes a floating-point Vector3 object, or 3x zero if null is given.
 	 *
 	 * Note: ONLY use this where it is reasonable to allow not specifying the vector.
-	 * For all other purposes, use {@link DataPacket#putVector3Obj}
+	 * For all other purposes, use the non-nullable version.
+	 *
+	 * @see NetworkBinaryStream::putVector3()
 	 *
 	 * @param Vector3|null $vector
 	 */
-	public function putVector3ObjNullable(Vector3 $vector = null) : void{
+	public function putVector3Nullable(?Vector3 $vector) : void{
 		if($vector){
-			$this->putVector3Obj($vector);
+			$this->putVector3($vector);
 		}else{
 			$this->putLFloat(0.0);
 			$this->putLFloat(0.0);
@@ -439,11 +391,10 @@ abstract class DataPacket extends NetworkBinaryStream{
 
 	/**
 	 * Writes a floating-point Vector3 object
-	 * TODO: get rid of primitive methods and replace with this
 	 *
 	 * @param Vector3 $vector
 	 */
-	public function putVector3Obj(Vector3 $vector) : void{
+	public function putVector3(Vector3 $vector) : void{
 		$this->putLFloat($vector->x);
 		$this->putLFloat($vector->y);
 		$this->putLFloat($vector->z);
@@ -461,7 +412,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 	 * Reads gamerules
 	 * TODO: implement this properly
 	 *
-	 * @return array
+	 * @return array, members are in the structure [name => [type, value]]
 	 */
 	public function getGameRules() : array{
 		$count = $this->getUnsignedVarInt();
@@ -489,7 +440,7 @@ abstract class DataPacket extends NetworkBinaryStream{
 	}
 
 	/**
-	 * Writes a gamerule array
+	 * Writes a gamerule array, members should be in the structure [name => [type, value]]
 	 * TODO: implement this properly
 	 *
 	 * @param array $rules
@@ -510,6 +461,54 @@ abstract class DataPacket extends NetworkBinaryStream{
 					$this->putLFloat($rule[1]);
 					break;
 			}
+		}
+	}
+
+	/**
+	 * @return EntityLink
+	 */
+	protected function getEntityLink() : EntityLink{
+		$link = new EntityLink();
+
+		$link->fromEntityUniqueId = $this->getEntityUniqueId();
+		$link->toEntityUniqueId = $this->getEntityUniqueId();
+		$link->type = $this->getByte();
+		$link->immediate = $this->getBool();
+
+		return $link;
+	}
+
+	/**
+	 * @param EntityLink $link
+	 */
+	protected function putEntityLink(EntityLink $link) : void{
+		$this->putEntityUniqueId($link->fromEntityUniqueId);
+		$this->putEntityUniqueId($link->toEntityUniqueId);
+		$this->putByte($link->type);
+		$this->putBool($link->immediate);
+	}
+
+	protected function getCommandOriginData() : CommandOriginData{
+		$result = new CommandOriginData();
+
+		$result->type = $this->getUnsignedVarInt();
+		$result->uuid = $this->getUUID();
+		$result->requestId = $this->getString();
+
+		if($result->type === CommandOriginData::ORIGIN_DEV_CONSOLE or $result->type === CommandOriginData::ORIGIN_TEST){
+			$result->varlong1 = $this->getVarLong();
+		}
+
+		return $result;
+	}
+
+	protected function putCommandOriginData(CommandOriginData $data) : void{
+		$this->putUnsignedVarInt($data->type);
+		$this->putUUID($data->uuid);
+		$this->putString($data->requestId);
+
+		if($data->type === CommandOriginData::ORIGIN_DEV_CONSOLE or $data->type === CommandOriginData::ORIGIN_TEST){
+			$this->putVarLong($data->varlong1);
 		}
 	}
 }

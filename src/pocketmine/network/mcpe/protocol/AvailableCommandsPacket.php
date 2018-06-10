@@ -25,8 +25,8 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
+use pocketmine\network\mcpe\NetworkBinaryStream;
 use pocketmine\network\mcpe\NetworkSession;
-use pocketmine\utils\BinaryStream;
 use pocketmine\Server;
 
 class AvailableCommandsPacket extends DataPacket{
@@ -87,7 +87,7 @@ class AvailableCommandsPacket extends DataPacket{
 		$enumValuesCount = 0;
 		$enumAdditional = [];
 		$enums = [];
-		$commandsStream = new BinaryStream();
+		$commandsStream = new NetworkBinaryStream();
 		foreach($this->commands as $commandName => $commandData){
 			if($commandName === "help"){
 				continue;

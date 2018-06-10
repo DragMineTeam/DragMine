@@ -123,6 +123,19 @@ namespace pocketmine {
 		define('pocketmine\PATH', dirname(__FILE__, 3) . DIRECTORY_SEPARATOR);
 	}
 
+	define('pocketmine\COMPOSER_AUTOLOADER_PATH', \pocketmine\PATH . 'vendor/autoload.php');
+	function composer_error_die($message){
+		critical_error($message);
+		critical_error("Please install/update Composer dependencies or use provided builds.");
+		exit(1);
+	}
+
+	if(is_file(\pocketmine\COMPOSER_AUTOLOADER_PATH)){
+		require_once(\pocketmine\COMPOSER_AUTOLOADER_PATH);
+	}else{
+		composer_error_die("Composer autoloader not found.");
+	}
+
 	$requiredSplVer = "0.0.1";
 	if(!is_file(\pocketmine\PATH . "src/spl/version.php")){
 		echo "[CRITICAL] Cannot find PocketMine-SPL or incompatible version." . PHP_EOL;

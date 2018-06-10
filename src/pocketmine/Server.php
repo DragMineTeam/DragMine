@@ -112,6 +112,8 @@ use pocketmine\utils\Utils;
 use pocketmine\utils\UUID;
 use pocketmine\utils\VersionString;
 use pocketmine\utils\MapUtils;
+use pocketmine\snooze\SleeperHandler;
+use pocketmine\snooze\SleeperNotifier;
 
 /**
  * The class that manages everything
@@ -125,6 +127,9 @@ class Server{
 
 	/** @var \Threaded */
 	private static $sleeper = null;
+
+	/** @var SleeperHandler */
+	private $tickSleeper;
 
 	/** @var BanList */
 	private $banByName = null;
@@ -1440,6 +1445,7 @@ class Server{
 	public function __construct(\ClassLoader $autoloader, \ThreadedLogger $logger, string $filePath, string $dataPath, string $pluginPath){
 		self::$instance = $this;
 		self::$sleeper = new \Threaded;
+		$this->tickSleeper = new SleeperHandler();
 		$this->autoloader = $autoloader;
 		$this->logger = $logger;
 
@@ -2309,6 +2315,10 @@ class Server{
 
 	public function __debugInfo(){
 		return [];
+	}
+
+	public function getTickSleeper() : SleeperHandler{
+		return $this->tickSleeper;
 	}
 
 	private function tickProcessor(){
