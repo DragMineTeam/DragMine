@@ -15,20 +15,22 @@ class FilledMap extends Item{
 	 * @var int $scale
 	 * @var int $width
 	 * @var int $height
+	 * @var array $decorationEntityUniqueIds
 	 * @var array $decorations
 	 * @var int $xOffset
 	 * @var int $yOffset
 	 */
 	 
-	public $map_id, $colors = [], $scale, $width, $height, $decorations = [], $xOffset, $yOffset;
+	public $map_id, $colors = [], $scale, $width, $height, $decorationEntityUniqueIds = [], $decorations = [], $xOffset, $yOffset;
 	
-	public function __construct(int $map_id = -1, array $colors = [], int $scale = 1, int $width = 128, int $height = 128, $decorations = [], int $xOffset = 0, int $yOffset = 0){
+	public function __construct(int $map_id = -1, array $colors = [], int $scale = 1, int $width = 128, int $height = 128, $decorationEntityUniqueIds = [], $decorations = [], int $xOffset = 0, int $yOffset = 0){
 		parent::__construct(self::FILLED_MAP, 0, "Filled Map");
 		$this->map_id = $map_id;
 		$this->colors = $colors;
 		$this->scale = $scale;
 		$this->width = $width;
 		$this->height = $height;
+		$this->decorationEntityUniqueIds = $decorationEntityUniqueIds;
 		$this->decorations = $decorations;
 		$this->xOffset = $xOffset;
 		$this->yOffset = $yOffset;
@@ -53,6 +55,27 @@ class FilledMap extends Item{
 	public function setScale(int $scale){
 		$this->scale = $scale;
 		$this->update(ClientboundMapItemDataPacket::BITFLAG_TEXTURE_UPDATE);
+	}
+
+	public function getDecorationEntityUniqueIds(){
+		return $this->decorationEntityUniqueIds;
+	}
+
+	public function setDecorationEntityUniqueIds($decorationEntityUniqueIds){
+		$this->decorationEntityUniqueIds = $decorationEntityUniqueIds;
+		$this->update(ClientboundMapItemDataPacket::BITFLAG_DECORATION_UPDATE);
+	}
+
+	public function addDecorationEntityUniqueId($decoration){
+		$this->decorationEntityUniqueIds[] = $decoration;
+		end($this->decorationEntityUniqueIds);
+		$this->update(ClientboundMapItemDataPacket::BITFLAG_DECORATION_UPDATE);
+		return key($this->decorationEntityUniqueIds);
+	}
+
+	public function removeDecorationEntityUniqueId(int $id){
+		unset($this->decorations[$id]);
+		$this->update(ClientboundMapItemDataPacket::BITFLAG_DECORATION_UPDATE);
 	}
 
 	public function getDecorations(){
@@ -147,6 +170,7 @@ class FilledMap extends Item{
 		$pk->type = $type;
 		$pk->eids = [];
 		$pk->scale = $this->getScale();
+		$pk->decorationEntityUniqueIds = $this->getDecorationEntityUniqueIds();
 		$pk->decorations = $this->getDecorations();
 		$pk->width = $this->getWidth();
 		$pk->height = $this->getHeight();
