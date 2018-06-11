@@ -584,8 +584,14 @@ class MapUtils {
 					if($color[1] === -1){
 						return self::$BaseMapColors[$index];
 					}else{
-						if($color[1] === $meta){
-							return self::$BaseMapColors[$index];
+						if($color[2]){
+							if(($color[1] & 0x07) === $meta){
+								return self::$BaseMapColors[$index];
+							}
+						}else{
+							if($color[1] === $meta){
+								return self::$BaseMapColors[$index];
+							}
 						}
 					}
 				}
