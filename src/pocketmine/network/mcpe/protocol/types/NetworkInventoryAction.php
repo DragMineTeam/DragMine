@@ -226,8 +226,7 @@ class NetworkInventoryAction{
 						return new AnvilAction($window, 1, $this->oldItem, $this->newItem);
 					case self::SOURCE_TYPE_ANVIL_RESULT:
 						$window = $player->getWindowByType(AnvilInventory::class);
-						$air = Item::get(0);
-						$window->setContents([$air, $air, $this->oldItem], false);
+						$window->isMoving = true;
 						return new AnvilAction($window, 2, $this->oldItem, $this->newItem);
 
 					case self::SOURCE_TYPE_ENCHANT_INPUT:

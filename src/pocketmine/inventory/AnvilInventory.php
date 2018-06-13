@@ -32,6 +32,8 @@ class AnvilInventory extends ContainerInventory{
 	/** @var FakeBlockMenu */
 	protected $holder;
 
+	public $isMoving = false;
+
 	public function __construct(Position $pos){
 		parent::__construct(new FakeBlockMenu($this, $pos));
 	}
@@ -60,13 +62,15 @@ class AnvilInventory extends ContainerInventory{
 		parent::onClose($who);
 
 		$inventory = $who->getInventory();
-		for($i=0,$size=$this->getDefaultSize();$i<$size;++$i){
-			$item = $this->getItem($i);
-			if(!$item->isNull()){
-				if($inventory->canAddItem($item)){
-					$inventory->addItem($item);
-				}else{
-					$who->dropItem($item);
+		if(!$this->isMoving){
+			for($i=0;$i<$this->getDefaultSize();++$i){
+				$item = $this->getItem($i);
+				if(!$item->isNull()){
+					if($inventory->canAddItem($item)){
+						$inventory->addItem($item);
+					}else{
+						$who->dropItem($item);
+					}
 				}
 			}
 		}
