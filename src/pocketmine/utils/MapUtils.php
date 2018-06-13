@@ -578,6 +578,20 @@ class MapUtils {
 			]
 		];
 
+		$noneColorBlocks = [
+
+		];
+
+		foeach($noneColorBlocks as $blocks){
+			if($blocks[0] === $id){
+				if(($blocks[1] !== -1) && ($blocks[1] == $meta)){
+					return null;
+				}elseif($blocks[1] === -1){
+					return null;
+				}
+			}
+		}
+
 		foreach($blockColors as $index => $colors){
 			foreach($colors as $color){
 				if($color[0] === $id){
