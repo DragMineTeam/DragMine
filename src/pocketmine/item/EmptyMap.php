@@ -43,6 +43,16 @@ class EmptyMap extends Item{
 	public function onClickAir(Player $player, Vector3 $directionVector) : bool{
 		$id = MapUtils::getNewId();
 		$vec = new Vector3($player->x, $player->y, $player->z);
+		if($vec->x + 64 >= 0){
+			$vec->x = (int)(($vec->x + 64) / 128) * 128;
+		}else{
+			$vec->x = (int)(($vec->x - 63) / 128) * 128;
+		}
+		if($vec->z + 64 >= 0){
+			$vec->z = (int)(($vec->z + 64) / 128) * 128;
+		}else{
+			$vec->z = (int)(($vec->z - 63) / 128) * 128;
+		}
 		$result = [];
 		$size = 128;
 		for($i=1;$i<$this->size;$i++){
