@@ -226,6 +226,7 @@ class NetworkInventoryAction{
 						return new AnvilAction($window, 1, $this->oldItem, $this->newItem);
 					case self::SOURCE_TYPE_ANVIL_RESULT:
 						$window = $player->getWindowByType(AnvilInventory::class);
+						$window->setItem(1, Item::get(0)); //TODO: HACK!
 						$window->isMoving = true;
 						return new AnvilAction($window, 2, $this->oldItem, $this->newItem);
 
