@@ -266,7 +266,8 @@ class RakLibInterface implements ServerInstance, AdvancedSourceInterface{
 		return null;
 	}
 
-	public function updatePing(string $identifier, int $pingMS) : void{		if(isset($this->players[$identifier])){
+	public function updatePing(string $identifier, int $pingMS) : void{
+		if(isset($this->players[$identifier])){
 			$this->players[$identifier]->updatePing($pingMS);
 		}
 	}
