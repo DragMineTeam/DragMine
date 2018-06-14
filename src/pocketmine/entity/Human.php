@@ -276,20 +276,16 @@ class Human extends Creature implements ProjectileSource, InventoryHolder{
 
 	/**
 	 * @param int $level
-	 *
-	 * @return bool
 	 */
-	public function addXpLevel(int $level) : bool{
-		return $this->setXpLevel($this->getXpLevel() + $level);
+	public function addXpLevel(int $level){
+		$this->setXpLevel($this->getXpLevel() + $level);
 	}
 
 	/**
 	 * @param int $level
-	 *
-	 * @return bool
 	 */
-	public function takeXpLevel(int $level) : bool{
-		return $this->setXpLevel($this->getXpLevel() - $level);
+	public function takeXpLevel(int $level){
+		$this->setXpLevel($this->getXpLevel() - $level);
 	}
 
 	/**
