@@ -68,6 +68,7 @@ use pocketmine\event\player\PlayerRespawnEvent;
 use pocketmine\event\player\PlayerToggleFlightEvent;
 use pocketmine\event\player\PlayerToggleSneakEvent;
 use pocketmine\event\player\PlayerToggleSprintEvent;
+use pocketmine\event\player\PlayerToggleSwimEvent;
 use pocketmine\event\player\PlayerTransferEvent;
 use pocketmine\event\server\DataPacketSendEvent;
 use pocketmine\event\TextContainer;
@@ -2901,6 +2902,24 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 					$this->setSneaking(false);
 				}
 				return true;
+			case PlayerActionPacket::ACTION_START_SWIMMING:
+				$ev = new PlayerToggleSwimEvent($this, true);
+				$this->server->getPluginManager()->callEvent($ev);
+				if($ev->isCancelled()){
+					$this->sendData($this);
+				}else{
+					$this->setSwimming(true);
+				}
+				return true;
+            		case PlayerActionPacket::ACTION_STOP_SWIMMING:
+            			$ev = new PlayerToggleSwimEvent($this, false);
+            			$this->server->getPluginManager()->callEvent($ev);
+				if($ev->isCancelled()){
+					$this->sendData($this);
+				}else{
+					$this->setSwimming(false);
+				}
+				return true;
 			case PlayerActionPacket::ACTION_START_GLIDE:
 			case PlayerActionPacket::ACTION_STOP_GLIDE:
 				break; //TODO
@@ -2939,11 +2958,6 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$pk->action = $ev->getAnimationType();
 		$this->server->broadcastPacket($this->getViewers(), $pk);
 
-		return true;
-	}
-
-	public function handlePing(PingPacket $packet) : bool{
-		$this->setPing($packet->ping);
 		return true;
 	}
 
