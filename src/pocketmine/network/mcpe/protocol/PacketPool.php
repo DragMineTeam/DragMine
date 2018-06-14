@@ -146,7 +146,6 @@ class PacketPool{
 		*/
 
 		static::registerPacket(new BatchPacket());
-		static::registerPacket(new PingPacket());
 	}
 
 	/**
