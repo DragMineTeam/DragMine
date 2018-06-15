@@ -44,11 +44,15 @@ class EntityEventPacket extends DataPacket{
 	const FISH_HOOK_HOOK = 13;
 	const FISH_HOOK_TEASE = 14;
 	const SQUID_INK_CLOUD = 15;
-	const AMBIENT_SOUND = 16;
 
+	const AMBIENT_SOUND = 17;
 	const RESPAWN = 18;
 
+	const ENCHANT = 34;
+
 	const EATING_ITEM = 57;
+
+	const UNKNOWN1 = 66;
 
 	//TODO: add more events
 
