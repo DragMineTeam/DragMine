@@ -133,7 +133,6 @@ use pocketmine\network\mcpe\protocol\MapInfoRequestPacket;
 use pocketmine\network\mcpe\protocol\MobEquipmentPacket;
 use pocketmine\network\mcpe\protocol\ModalFormResponsePacket;
 use pocketmine\network\mcpe\protocol\MovePlayerPacket;
-use pocketmine\network\mcpe\protocol\PingPacket;
 use pocketmine\network\mcpe\protocol\PlayerActionPacket;
 use pocketmine\network\mcpe\protocol\PlayerHotbarPacket;
 use pocketmine\network\mcpe\protocol\PlayerInputPacket;
@@ -2337,6 +2336,15 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 
 				$this->dataPacket($packet);
 				$this->server->broadcastPacket($this->getViewers(), $packet);
+				break;
+			case EntityEventPacket::ENCHANT:
+				if($packet->data === 0){
+					return false;
+				}
+
+				if($this->isSurvival()){
+					$this->addXpLevel($packet->data);
+				}
 				break;
 			default:
 				return false;
