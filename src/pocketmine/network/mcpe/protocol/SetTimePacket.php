@@ -25,24 +25,23 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class SetTimePacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::SET_TIME_PACKET;
+	public const NETWORK_ID = ProtocolInfo::SET_TIME_PACKET;
 
 	/** @var int */
 	public $time;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->time = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putVarInt($this->time);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleSetTime($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleSetTime($this);
 	}
-
 }

@@ -23,19 +23,14 @@ declare(strict_types=1);
 
 namespace pocketmine\entity;
 
-use pocketmine\nbt\tag\IntTag;
-use pocketmine\network\mcpe\protocol\AddEntityPacket;
-use pocketmine\Player;
-
 class Villager extends Creature implements NPC, Ageable{
-	const PROFESSION_FARMER = 0;
-	const PROFESSION_LIBRARIAN = 1;
-	const PROFESSION_PRIEST = 2;
-	const PROFESSION_BLACKSMITH = 3;
-	const PROFESSION_BUTCHER = 4;
-	const PROFESSION_GENERIC = 5;
+	public const PROFESSION_FARMER = 0;
+	public const PROFESSION_LIBRARIAN = 1;
+	public const PROFESSION_PRIEST = 2;
+	public const PROFESSION_BLACKSMITH = 3;
+	public const PROFESSION_BUTCHER = 4;
 
-	const NETWORK_ID = 15;
+	public const NETWORK_ID = self::VILLAGER;
 
 	public $width = 0.6;
 	public $height = 1.8;
@@ -44,25 +39,22 @@ class Villager extends Creature implements NPC, Ageable{
 		return "Villager";
 	}
 
-	protected function initEntity(){
+	protected function initEntity() : void{
 		parent::initEntity();
-		if(!isset($this->namedtag->Profession)){
-			$this->setProfession(self::PROFESSION_GENERIC);
+
+		/** @var int $profession */
+		$profession = $this->namedtag->getInt("Profession", self::PROFESSION_FARMER);
+
+		if($profession > 4 or $profession < 0){
+			$profession = self::PROFESSION_FARMER;
 		}
+
+		$this->setProfession($profession);
 	}
 
-	public function spawnTo(Player $player){
-		$pk = new AddEntityPacket();
-		$pk->entityRuntimeId = $this->getId();
-		$pk->type = Villager::NETWORK_ID;
-		$pk->position = $this->asVector3();
-		$pk->motion = $this->getMotion();
-		$pk->yaw = $this->yaw;
-		$pk->pitch = $this->pitch;
-		$pk->metadata = $this->dataProperties;
-		$player->dataPacket($pk);
-
-		parent::spawnTo($player);
+	public function saveNBT() : void{
+		parent::saveNBT();
+		$this->namedtag->setInt("Profession", $this->getProfession());
 	}
 
 	/**
@@ -70,12 +62,12 @@ class Villager extends Creature implements NPC, Ageable{
 	 *
 	 * @param int $profession
 	 */
-	public function setProfession(int $profession){
-		$this->namedtag->Profession = new IntTag("Profession", $profession);
+	public function setProfession(int $profession) : void{
+		$this->propertyManager->setInt(self::DATA_VARIANT, $profession);
 	}
 
 	public function getProfession() : int{
-		return (int) $this->namedtag["Profession"];
+		return $this->propertyManager->getInt(self::DATA_VARIANT);
 	}
 
 	public function isBaby() : bool{

@@ -24,9 +24,9 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
+use pocketmine\item\TieredTool;
 
-class MonsterSpawner extends Solid{
+class MonsterSpawner extends Transparent{
 
 	protected $id = self::MONSTER_SPAWNER;
 
@@ -39,14 +39,26 @@ class MonsterSpawner extends Solid{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_PICKAXE;
+		return BlockToolType::TYPE_PICKAXE;
+	}
+
+	public function getToolHarvestLevel() : int{
+		return TieredTool::TIER_WOODEN;
 	}
 
 	public function getName() : string{
 		return "Monster Spawner";
 	}
 
-	public function getDrops(Item $item) : array{
+	public function getDropsForCompatibleTool(Item $item) : array{
 		return [];
+	}
+
+	public function isAffectedBySilkTouch() : bool{
+		return false;
+	}
+
+	protected function getXpDropAmount() : int{
+		return mt_rand(15, 43);
 	}
 }

@@ -25,14 +25,13 @@ namespace pocketmine\block;
 
 use pocketmine\event\block\BlockGrowEvent;
 use pocketmine\item\Item;
-use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 use pocketmine\Server;
 
 abstract class Crops extends Flowable{
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		if($blockReplace->getSide(Vector3::SIDE_DOWN)->getId() === Block::FARMLAND){
 			$this->getLevel()->setBlock($blockReplace, $this, true, true);
 
@@ -65,34 +64,31 @@ abstract class Crops extends Flowable{
 		return false;
 	}
 
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_DOWN)->getId() !== Block::FARMLAND){
+			$this->getLevel()->useBreakOn($this);
+		}
+	}
+
 	public function ticksRandomly() : bool{
 		return true;
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if($this->getSide(Vector3::SIDE_DOWN)->getId() !== Block::FARMLAND){
-				$this->getLevel()->useBreakOn($this);
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
-		}elseif($type === Level::BLOCK_UPDATE_RANDOM){
-			if(mt_rand(0, 2) === 1){
-				if($this->meta < 0x07){
-					$block = clone $this;
-					++$block->meta;
-					Server::getInstance()->getPluginManager()->callEvent($ev = new BlockGrowEvent($this, $block));
+	public function onRandomTick() : void{
+		if(mt_rand(0, 2) === 1){
+			if($this->meta < 0x07){
+				$block = clone $this;
+				++$block->meta;
+				Server::getInstance()->getPluginManager()->callEvent($ev = new BlockGrowEvent($this, $block));
 
-					if(!$ev->isCancelled()){
-						$this->getLevel()->setBlock($this, $ev->getNewState(), true, true);
-					}else{
-						return Level::BLOCK_UPDATE_RANDOM;
-					}
+				if(!$ev->isCancelled()){
+					$this->getLevel()->setBlock($this, $ev->getNewState(), true, true);
 				}
-			}else{
-				return Level::BLOCK_UPDATE_RANDOM;
 			}
 		}
+	}
 
+	public function isAffectedBySilkTouch() : bool{
 		return false;
 	}
 }

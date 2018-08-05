@@ -23,20 +23,12 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\item\Item;
-use pocketmine\item\Tool;
-use pocketmine\math\AxisAlignedBB;
-use pocketmine\math\Vector3;
-use pocketmine\Player;
-
-class WoodenSlab extends Transparent{
+class WoodenSlab extends Slab{
 
 	protected $id = self::WOODEN_SLAB;
 
-	protected $doubleId = self::DOUBLE_WOODEN_SLAB;
-
-	public function __construct(int $meta = 0){
-		$this->meta = $meta;
+	public function getDoubleSlabId() : int{
+		return self::DOUBLE_WOODEN_SLAB;
 	}
 
 	public function getHardness() : float{
@@ -52,89 +44,22 @@ class WoodenSlab extends Transparent{
 			4 => "Acacia",
 			5 => "Dark Oak"
 		];
-		return (($this->meta & 0x08) === 0x08 ? "Upper " : "") . ($names[$this->meta & 0x07] ?? "") . " Wooden Slab";
-	}
-
-	protected function recalculateBoundingBox(){
-
-		if(($this->meta & 0x08) > 0){
-			return new AxisAlignedBB(
-				$this->x,
-				$this->y + 0.5,
-				$this->z,
-				$this->x + 1,
-				$this->y + 1,
-				$this->z + 1
-			);
-		}else{
-			return new AxisAlignedBB(
-				$this->x,
-				$this->y,
-				$this->z,
-				$this->x + 1,
-				$this->y + 0.5,
-				$this->z + 1
-			);
-		}
-	}
-
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
-		$this->meta &= 0x07;
-		if($face === Vector3::SIDE_DOWN){
-			if($blockClicked->getId() === $this->id and ($blockClicked->getDamage() & 0x08) === 0x08 and ($blockClicked->getDamage() & 0x07) === $this->meta){
-				$this->getLevel()->setBlock($blockClicked, BlockFactory::get($this->doubleId, $this->meta), true);
-
-				return true;
-			}elseif($blockReplace->getId() === $this->id and ($blockReplace->getDamage() & 0x07) === $this->meta){
-				$this->getLevel()->setBlock($blockReplace, BlockFactory::get($this->doubleId, $this->meta), true);
-
-				return true;
-			}else{
-				$this->meta |= 0x08;
-			}
-		}elseif($face === Vector3::SIDE_UP){
-			if($blockClicked->getId() === $this->id and ($blockClicked->getDamage() & 0x08) === 0 and ($blockClicked->getDamage() & 0x07) === $this->meta){
-				$this->getLevel()->setBlock($blockClicked, BlockFactory::get($this->doubleId, $this->meta), true);
-
-				return true;
-			}elseif($blockReplace->getId() === $this->id and ($blockReplace->getDamage() & 0x07) === $this->meta){
-				$this->getLevel()->setBlock($blockReplace, BlockFactory::get($this->doubleId, $this->meta), true);
-
-				return true;
-			}
-		}else{ //TODO: collision
-			if($blockReplace->getId() === $this->id){
-				if(($blockReplace->getDamage() & 0x07) === $this->meta){
-					$this->getLevel()->setBlock($blockReplace, BlockFactory::get($this->doubleId, $this->meta), true);
-
-					return true;
-				}
-
-				return false;
-			}else{
-				if($facePos->y > 0.5){
-					$this->meta |= 0x08;
-				}
-			}
-		}
-
-		if($blockReplace->getId() === $this->id and ($blockClicked->getDamage() & 0x07) !== ($this->meta & 0x07)){
-			return false;
-		}
-		$this->getLevel()->setBlock($blockReplace, $this, true, true);
-
-		return true;
+		return (($this->meta & 0x08) === 0x08 ? "Upper " : "") . ($names[$this->getVariant()] ?? "") . " Wooden Slab";
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_AXE;
-	}
-
-	public function getVariantBitmask() : int{
-		return 0x07;
+		return BlockToolType::TYPE_AXE;
 	}
 
 	public function getFuelTime() : int{
 		return 300;
+	}
+
+	public function getFlameEncouragement() : int{
+		return 5;
+	}
+
+	public function getFlammability() : int{
+		return 20;
 	}
 }

@@ -24,14 +24,18 @@ declare(strict_types=1);
 namespace pocketmine\level\particle;
 
 use pocketmine\entity\Entity;
+use pocketmine\entity\Skin;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\AddPlayerPacket;
+use pocketmine\network\mcpe\protocol\PlayerListPacket;
 use pocketmine\network\mcpe\protocol\RemoveEntityPacket;
+use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 use pocketmine\utils\UUID;
 
 class FloatingTextParticle extends Particle{
+	//TODO: HACK!
 
 	protected $text;
 	protected $title;
@@ -69,7 +73,7 @@ class FloatingTextParticle extends Particle{
 		return $this->invisible;
 	}
 
-	public function setInvisible(bool $value = true){
+	public function setInvisible(bool $value = true) : void{
 		$this->invisible = $value;
 	}
 
@@ -86,22 +90,35 @@ class FloatingTextParticle extends Particle{
 		}
 
 		if(!$this->invisible){
+			$uuid = UUID::fromRandom();
+			$name = $this->title . ($this->text !== "" ? "\n" . $this->text : "");
+
+			$add = new PlayerListPacket();
+			$add->type = PlayerListPacket::TYPE_ADD;
+			$add->entries = [PlayerListEntry::createAdditionEntry($uuid, $this->entityId, $name, $name, 0, new Skin("Standard_Custom", str_repeat("\x00", 8192)))];
+			$p[] = $add;
+
 			$pk = new AddPlayerPacket();
-			$pk->uuid = UUID::fromRandom();
-			$pk->username = $this->title . ($this->text !== "" ? "\n" . $this->text : "");
+			$pk->uuid = $uuid;
+			$pk->username = $name;
 			$pk->entityRuntimeId = $this->entityId;
 			$pk->position = $this->asVector3(); //TODO: check offset
 			$pk->item = ItemFactory::get(Item::AIR, 0, 0);
 
-			$flags = 0;
-    			$flags |= 1 << Entity::DATA_FLAG_IMMOBILE;
-
+			$flags = (
+				1 << Entity::DATA_FLAG_IMMOBILE
+			);
 			$pk->metadata = [
 				Entity::DATA_FLAGS =>   [Entity::DATA_TYPE_LONG,   $flags],
-				Entity::DATA_SCALE =>   [Entity::DATA_TYPE_FLOAT,  0.00]
+				Entity::DATA_SCALE =>   [Entity::DATA_TYPE_FLOAT,  0.01] //zero causes problems on debug builds
 			];
 
 			$p[] = $pk;
+
+			$remove = new PlayerListPacket();
+			$remove->type = PlayerListPacket::TYPE_REMOVE;
+			$remove->entries = [PlayerListEntry::createRemovalEntry($uuid)];
+			$p[] = $remove;
 		}
 
 		return $p;

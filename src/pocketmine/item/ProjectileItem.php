@@ -24,14 +24,11 @@ declare(strict_types=1);
 namespace pocketmine\item;
 
 use pocketmine\entity\Entity;
-use pocketmine\entity\Projectile;
+use pocketmine\entity\projectile\Projectile;
 use pocketmine\event\entity\ProjectileLaunchEvent;
-use pocketmine\level\sound\LaunchSound;
 use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\DoubleTag;
-use pocketmine\nbt\tag\FloatTag;
-use pocketmine\nbt\tag\ListTag;
 use pocketmine\Player;
 
 abstract class ProjectileItem extends Item{
@@ -40,39 +37,41 @@ abstract class ProjectileItem extends Item{
 
 	abstract public function getThrowForce() : float;
 
-	public function onClickAir(Player $player, Vector3 $directionVector) : bool{
-		$nbt = new CompoundTag("", [
-			new ListTag("Pos", [
-				new DoubleTag("", $player->x),
-				new DoubleTag("", $player->y + $player->getEyeHeight()),
-				new DoubleTag("", $player->z)
-			]),
-			new ListTag("Motion", [
-				new DoubleTag("", $directionVector->x),
-				new DoubleTag("", $directionVector->y),
-				new DoubleTag("", $directionVector->z)
-			]),
-			new ListTag("Rotation", [
-				new FloatTag("", $player->yaw),
-				new FloatTag("", $player->pitch)
-			]),
-		]);
+	/**
+	 * Helper function to apply extra NBT tags to pass to the created projectile.
+	 *
+	 * @param CompoundTag $tag
+	 */
+	protected function addExtraTags(CompoundTag $tag) : void{
 
-		$snowball = Entity::createEntity($this->getProjectileEntityType(), $player->getLevel(), $nbt, $player);
-		$snowball->setMotion($snowball->getMotion()->multiply($this->getThrowForce()));
+	}
+
+	public function onClickAir(Player $player, Vector3 $directionVector) : bool{
+		$nbt = Entity::createBaseNBT($player->add(0, $player->getEyeHeight(), 0), $directionVector, $player->yaw, $player->pitch);
+		$this->addExtraTags($nbt);
+
+		$projectile = Entity::createEntity($this->getProjectileEntityType(), $player->getLevel(), $nbt, $player);
+		if($projectile !== null){
+			$projectile->setMotion($projectile->getMotion()->multiply($this->getThrowForce()));
+		}
 
 		$this->count--;
 
-		if($snowball instanceof Projectile){
-			$player->getServer()->getPluginManager()->callEvent($projectileEv = new ProjectileLaunchEvent($snowball));
+		if($projectile instanceof Projectile){
+			$player->getServer()->getPluginManager()->callEvent($projectileEv = new ProjectileLaunchEvent($projectile));
 			if($projectileEv->isCancelled()){
-				$snowball->kill();
+				$projectile->flagForDespawn();
 			}else{
-				$snowball->spawnToAll();
-				$player->getLevel()->addSound(new LaunchSound($player), $player->getViewers());
+				$projectile->spawnToAll();
+
+				//319 is the Player's entity type ID in MCPE, with all its flags (which we don't know)
+				//without this, it doesn't work at all.
+				$player->getLevel()->broadcastLevelSoundEvent($player, LevelSoundEventPacket::SOUND_THROW, 319);
 			}
+		}elseif($projectile !== null){
+			$projectile->spawnToAll();
 		}else{
-			$snowball->spawnToAll();
+			return false;
 		}
 
 		return true;

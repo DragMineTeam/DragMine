@@ -29,12 +29,20 @@ use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\tile\Banner as TileBanner;
 
 class Banner extends Item{
+	public const TAG_BASE = TileBanner::TAG_BASE;
+	public const TAG_PATTERNS = TileBanner::TAG_PATTERNS;
+	public const TAG_PATTERN_COLOR = TileBanner::TAG_PATTERN_COLOR;
+	public const TAG_PATTERN_NAME = TileBanner::TAG_PATTERN_NAME;
 
-	public function __construct(int $meta = 0) {
-		$this->block = BlockFactory::get(Block::STANDING_BANNER);
+	public function __construct(int $meta = 0){
 		parent::__construct(self::BANNER, $meta, "Banner");
+	}
+
+	public function getBlock() : Block{
+		return BlockFactory::get(Block::STANDING_BANNER);
 	}
 
 	public function getMaxStackSize() : int{
@@ -47,7 +55,7 @@ class Banner extends Item{
 	 * @return int
 	 */
 	public function getBaseColor() : int{
-		return $this->getNamedTag()->Base->getValue();
+		return $this->getNamedTag()->getInt(self::TAG_BASE, 0);
 	}
 
 	/**
@@ -58,7 +66,7 @@ class Banner extends Item{
 	 */
 	public function setBaseColor(int $color) : void{
 		$namedTag = $this->getNamedTag();
-		$namedTag->Base->setValue($color & 0x0f);
+		$namedTag->setInt(self::TAG_BASE, $color & 0x0f);
 		$this->setNamedTag($namedTag);
 	}
 
@@ -72,19 +80,17 @@ class Banner extends Item{
 	 * @return int ID of pattern.
 	 */
 	public function addPattern(string $pattern, int $color) : int{
-		$patternId = 0;
-		if($this->getPatternCount() !== 0) {
-			$patternId = max($this->getPatternIds()) + 1;
-		}
+		$patternsTag = $this->getNamedTag()->getListTag(self::TAG_PATTERNS);
+		assert($patternsTag !== null);
 
-		$namedTag = $this->getNamedTag();
-		$namedTag->Patterns->{$patternId} = new CompoundTag("", [
-			new IntTag("Color", $color & 0x0f),
-			new StringTag("Pattern", $pattern)
-		]);
+		$patternsTag->push(new CompoundTag("", [
+			new IntTag(self::TAG_PATTERN_COLOR, $color & 0x0f),
+			new StringTag(self::TAG_PATTERN_NAME, $pattern)
+		]));
 
-		$this->setNamedTag($namedTag);
-		return $patternId;
+		$this->setNamedTagEntry($patternsTag);
+
+		return $patternsTag->count() - 1;
 	}
 
 	/**
@@ -96,7 +102,7 @@ class Banner extends Item{
 	 */
 	public function patternExists(int $patternId) : bool{
 		$this->correctNBT();
-		return isset($this->getNamedTag()->Patterns->{$patternId});
+		return $this->getNamedTag()->getListTag(self::TAG_PATTERNS)->isset($patternId);
 	}
 
 	/**
@@ -111,9 +117,14 @@ class Banner extends Item{
 			return [];
 		}
 
+		$patternsTag = $this->getNamedTag()->getListTag(self::TAG_PATTERNS);
+		assert($patternsTag !== null);
+		$pattern = $patternsTag->get($patternId);
+		assert($pattern instanceof CompoundTag);
+
 		return [
-			"Color" => $this->getNamedTag()->Patterns->{$patternId}->Color->getValue(),
-			"Pattern" => $this->getNamedTag()->Patterns->{$patternId}->Pattern->getValue()
+			self::TAG_PATTERN_COLOR => $pattern->getInt(self::TAG_PATTERN_COLOR),
+			self::TAG_PATTERN_NAME => $pattern->getString(self::TAG_PATTERN_NAME)
 		];
 	}
 
@@ -132,13 +143,15 @@ class Banner extends Item{
 			return false;
 		}
 
-		$namedTag = $this->getNamedTag();
-		$namedTag->Patterns->{$patternId}->setValue([
-			new IntTag("Color", $color & 0x0f),
-			new StringTag("Pattern", $pattern)
-		]);
+		$patternsTag = $this->getNamedTag()->getListTag(self::TAG_PATTERNS);
+		assert($patternsTag !== null);
 
-		$this->setNamedTag($namedTag);
+		$patternsTag->set($patternId, new CompoundTag("", [
+			new IntTag(self::TAG_PATTERN_COLOR, $color & 0x0f),
+			new StringTag(self::TAG_PATTERN_NAME, $pattern)
+		]));
+
+		$this->setNamedTagEntry($patternsTag);
 		return true;
 	}
 
@@ -155,9 +168,11 @@ class Banner extends Item{
 			return false;
 		}
 
-		$namedTag = $this->getNamedTag();
-		unset($namedTag->Patterns->{$patternId});
-		$this->setNamedTag($namedTag);
+		$patternsTag = $this->getNamedTag()->getListTag(self::TAG_PATTERNS);
+		if($patternsTag instanceof ListTag){
+			$patternsTag->remove($patternId);
+			$this->setNamedTagEntry($patternsTag);
+		}
 
 		return true;
 	}
@@ -169,31 +184,7 @@ class Banner extends Item{
 	 * @return bool indicating whether the banner was empty or not.
 	 */
 	public function deleteTopPattern() : bool{
-		$keys = $this->getPatternIds();
-		if(empty($keys)){
-			return false;
-		}
-
-		$index = max($keys);
-		$namedTag = $this->getNamedTag();
-		unset($namedTag->Patterns->{$index});
-		$this->setNamedTag($namedTag);
-
-		return true;
-	}
-
-	/**
-	 * Returns an array containing all pattern IDs
-	 *
-	 * @return array
-	 */
-	public function getPatternIds() : array{
-		$this->correctNBT();
-
-		$keys = array_keys((array) $this->getNamedTag()->Patterns);
-		return array_filter($keys, function($key){
-			return is_numeric($key);
-		}, ARRAY_FILTER_USE_KEY);
+		return $this->deletePattern($this->getPatternCount() - 1);
 	}
 
 	/**
@@ -203,17 +194,7 @@ class Banner extends Item{
 	 * @return bool indicating whether the banner was empty or not.
 	 */
 	public function deleteBottomPattern() : bool{
-		$keys = $this->getPatternIds();
-		if(empty($keys)){
-			return false;
-		}
-
-		$namedTag = $this->getNamedTag();
-		$index = min($keys);
-		unset($namedTag->Patterns->{$index});
-		$this->setNamedTag($namedTag);
-
-		return true;
+		return $this->deletePattern(0);
 	}
 
 	/**
@@ -222,18 +203,22 @@ class Banner extends Item{
 	 * @return int
 	 */
 	public function getPatternCount() : int{
-		return count($this->getPatternIds());
+		return $this->getNamedTag()->getListTag(self::TAG_PATTERNS)->count();
 	}
 
 	public function correctNBT() : void{
-		$tag = $this->getNamedTag() ?? new CompoundTag();
-		if(!isset($tag->Base) or !($tag->Base instanceof IntTag)) {
-			$tag->Base = new IntTag("Base", $this->meta);
+		$tag = $this->getNamedTag();
+		if(!$tag->hasTag(self::TAG_BASE, IntTag::class)){
+			$tag->setInt(self::TAG_BASE, 0);
 		}
 
-		if(!isset($tag->Patterns) or !($tag->Patterns instanceof ListTag)) {
-			$tag->Patterns = new ListTag("Patterns");
+		if(!$tag->hasTag(self::TAG_PATTERNS, ListTag::class)){
+			$tag->setTag(new ListTag(self::TAG_PATTERNS));
 		}
 		$this->setNamedTag($tag);
+	}
+
+	public function getFuelTime() : int{
+		return 300;
 	}
 }

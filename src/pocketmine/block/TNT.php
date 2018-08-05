@@ -24,12 +24,10 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\entity\Entity;
+use pocketmine\entity\projectile\Arrow;
+use pocketmine\item\FlintSteel;
 use pocketmine\item\Item;
-use pocketmine\nbt\tag\ByteTag;
-use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\DoubleTag;
-use pocketmine\nbt\tag\FloatTag;
-use pocketmine\nbt\tag\ListTag;
+use pocketmine\math\Vector3;
 use pocketmine\Player;
 use pocketmine\utils\Random;
 
@@ -50,8 +48,8 @@ class TNT extends Solid{
 	}
 
 	public function onActivate(Item $item, Player $player = null) : bool{
-		if($item->getId() === Item::FLINT_STEEL){
-			$item->useOn($this);
+		if($item instanceof FlintSteel){
+			$item->applyDamage(1);
 			$this->ignite();
 			return true;
 		}
@@ -59,28 +57,39 @@ class TNT extends Solid{
 		return false;
 	}
 
+	public function hasEntityCollision() : bool{
+		return true;
+	}
+
+	public function onEntityCollide(Entity $entity) : void{
+		if($entity instanceof Arrow and $entity->isOnFire()){
+			$this->ignite();
+		}
+	}
+
 	public function ignite(int $fuse = 80){
 		$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), true);
 
 		$mot = (new Random())->nextSignedFloat() * M_PI * 2;
-		$tnt = Entity::createEntity("PrimedTNT", $this->getLevel(), new CompoundTag("", [
-			new ListTag("Pos", [
-				new DoubleTag("", $this->x + 0.5),
-				new DoubleTag("", $this->y),
-				new DoubleTag("", $this->z + 0.5)
-			]),
-			new ListTag("Motion", [
-				new DoubleTag("", -sin($mot) * 0.02),
-				new DoubleTag("", 0.2),
-				new DoubleTag("", -cos($mot) * 0.02)
-			]),
-			new ListTag("Rotation", [
-				new FloatTag("", 0),
-				new FloatTag("", 0)
-			]),
-			new ByteTag("Fuse", $fuse)
-		]));
+		$nbt = Entity::createBaseNBT($this->add(0.5, 0, 0.5), new Vector3(-sin($mot) * 0.02, 0.2, -cos($mot) * 0.02));
+		$nbt->setShort("Fuse", $fuse);
 
-		$tnt->spawnToAll();
+		$tnt = Entity::createEntity("PrimedTNT", $this->getLevel(), $nbt);
+
+		if($tnt !== null){
+			$tnt->spawnToAll();
+		}
+	}
+
+	public function getFlameEncouragement() : int{
+		return 15;
+	}
+
+	public function getFlammability() : int{
+		return 100;
+	}
+
+	public function onIncinerate() : void{
+		$this->ignite();
 	}
 }

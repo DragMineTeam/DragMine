@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace pocketmine\level\particle;
 
 use pocketmine\block\Block;
+use pocketmine\block\BlockFactory;
 use pocketmine\math\Vector3;
 
 class TerrainParticle extends GenericParticle{

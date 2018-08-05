@@ -25,23 +25,23 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class SetLastHurtByPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::SET_LAST_HURT_BY_PACKET;
+	public const NETWORK_ID = ProtocolInfo::SET_LAST_HURT_BY_PACKET;
 
 	/** @var int */
 	public $entityTypeId;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->entityTypeId = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putVarInt($this->entityTypeId);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleSetLastHurtBy($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleSetLastHurtBy($this);
 	}
 }

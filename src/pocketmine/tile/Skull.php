@@ -23,39 +23,60 @@ declare(strict_types=1);
 
 namespace pocketmine\tile;
 
-use pocketmine\level\Level;
-use pocketmine\nbt\tag\ByteTag;
+use pocketmine\item\Item;
+use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
+use pocketmine\Player;
 
 class Skull extends Spawnable{
-	const TYPE_SKELETON = 0;
-	const TYPE_WITHER = 1;
-	const TYPE_ZOMBIE = 2;
-	const TYPE_HUMAN = 3;
-	const TYPE_CREEPER = 4;
-	const TYPE_DRAGON = 5;
+	public const TYPE_SKELETON = 0;
+	public const TYPE_WITHER = 1;
+	public const TYPE_ZOMBIE = 2;
+	public const TYPE_HUMAN = 3;
+	public const TYPE_CREEPER = 4;
+	public const TYPE_DRAGON = 5;
 
-	public function __construct(Level $level, CompoundTag $nbt){
-		if(!isset($nbt->SkullType)){
-			$nbt->SkullType = new ByteTag("SkullType", 0);
-		}
-		if(!isset($nbt->Rot)){
-			$nbt->Rot = new ByteTag("Rot", 0);
-		}
-		parent::__construct($level, $nbt);
+	public const TAG_SKULL_TYPE = "SkullType"; //TAG_Byte
+	public const TAG_ROT = "Rot"; //TAG_Byte
+	public const TAG_MOUTH_MOVING = "MouthMoving"; //TAG_Byte
+	public const TAG_MOUTH_TICK_COUNT = "MouthTickCount"; //TAG_Int
+
+	/** @var int */
+	private $skullType;
+	/** @var int */
+	private $skullRotation;
+
+	protected function readSaveData(CompoundTag $nbt) : void{
+		$this->skullType = $nbt->getByte(self::TAG_SKULL_TYPE, self::TYPE_SKELETON, true);
+		$this->skullRotation = $nbt->getByte(self::TAG_ROT, 0, true);
+	}
+
+	protected function writeSaveData(CompoundTag $nbt) : void{
+		$nbt->setByte(self::TAG_SKULL_TYPE, $this->skullType);
+		$nbt->setByte(self::TAG_ROT, $this->skullRotation);
 	}
 
 	public function setType(int $type){
-		$this->namedtag->SkullType->setValue($type);
+		$this->skullType = $type;
 		$this->onChanged();
 	}
 
 	public function getType() : int{
-		return $this->namedtag->SkullType->getValue();
+		return $this->skullType;
 	}
 
-	public function addAdditionalSpawnData(CompoundTag $nbt){
-		$nbt->SkullType = $this->namedtag->SkullType;
-		$nbt->Rot = $this->namedtag->Rot;
+	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+		$nbt->setByte(self::TAG_SKULL_TYPE, $this->skullType);
+		$nbt->setByte(self::TAG_ROT, $this->skullRotation);
+	}
+
+	protected static function createAdditionalNBT(CompoundTag $nbt, Vector3 $pos, ?int $face = null, ?Item $item = null, ?Player $player = null) : void{
+		$nbt->setByte(self::TAG_SKULL_TYPE, $item !== null ? $item->getDamage() : self::TYPE_SKELETON);
+
+		$rot = 0;
+		if($face === Vector3::SIDE_UP and $player !== null){
+			$rot = floor(($player->yaw * 16 / 360) + 0.5) & 0x0F;
+		}
+		$nbt->setByte(self::TAG_ROT, $rot);
 	}
 }

@@ -24,20 +24,12 @@ declare(strict_types=1);
 
 namespace pocketmine\resourcepacks;
 
-
-use pocketmine\Server;
 use pocketmine\utils\Config;
 
 class ResourcePackManager{
 
-	/** @var Server */
-	private $server;
-
 	/** @var string */
 	private $path;
-
-	/** @var Config */
-	private $resourcePacksConfig;
 
 	/** @var bool */
 	private $serverForceResources = false;
@@ -49,64 +41,81 @@ class ResourcePackManager{
 	private $uuidList = [];
 
 	/**
-	 * @param Server $server
-	 * @param string $path Path to resource-packs directory.
+	 * @param string  $path Path to resource-packs directory.
+	 * @param \Logger $logger
 	 */
-	public function __construct(Server $server, string $path){
-		$this->server = $server;
+	public function __construct(string $path, \Logger $logger){
 		$this->path = $path;
 
 		if(!file_exists($this->path)){
-			$this->server->getLogger()->debug("Resource packs path $path does not exist, creating directory");
+			$logger->debug("Resource packs path $path does not exist, creating directory");
 			mkdir($this->path);
 		}elseif(!is_dir($this->path)){
 			throw new \InvalidArgumentException("Resource packs path $path exists and is not a directory");
 		}
 
 		if(!file_exists($this->path . "resource_packs.yml")){
-			copy($this->server->getFilePath() . "src/pocketmine/resources/resource_packs.yml", $this->path . "resource_packs.yml");
+			copy(\pocketmine\RESOURCE_PATH . "resource_packs.yml", $this->path . "resource_packs.yml");
 		}
 
-		$this->resourcePacksConfig = new Config($this->path . "resource_packs.yml", Config::YAML, []);
+		$resourcePacksConfig = new Config($this->path . "resource_packs.yml", Config::YAML, []);
 
-		$this->serverForceResources = (bool) $this->resourcePacksConfig->get("force_resources", false);
+		$this->serverForceResources = (bool) $resourcePacksConfig->get("force_resources", false);
 
-		$this->server->getLogger()->info("Loading resource packs...");
+		$logger->info("Loading resource packs...");
 
-		foreach($this->resourcePacksConfig->get("resource_stack", []) as $pos => $pack){
+		$resourceStack = $resourcePacksConfig->get("resource_stack", []);
+		if(!is_array($resourceStack)){
+			throw new \InvalidArgumentException("\"resource_stack\" key should contain a list of pack names");
+		}
+
+		foreach($resourceStack as $pos => $pack){
 			try{
+				$pack = (string) $pack;
+			}catch(\ErrorException $e){
+				$logger->critical("Found invalid entry in resource pack list at offset $pos of type " . gettype($pack));
+				continue;
+			}
+			try{
+				/** @var string $pack */
 				$packPath = $this->path . DIRECTORY_SEPARATOR . $pack;
-				if(file_exists($packPath)){
-					$newPack = null;
-					//Detect the type of resource pack.
-					if(is_dir($packPath)){
-						$this->server->getLogger()->warning("Skipped resource entry $pack due to directory resource packs currently unsupported");
-					}else{
-						$info = new \SplFileInfo($packPath);
-						switch($info->getExtension()){
-							case "zip":
-							case "mcpack":
-								$newPack = new ZippedResourcePack($packPath);
-								break;
-							default:
-								$this->server->getLogger()->warning("Skipped resource entry $pack due to format not recognized");
-								break;
-						}
-					}
-
-					if($newPack instanceof ResourcePack){
-						$this->resourcePacks[] = $newPack;
-						$this->uuidList[$newPack->getPackId()] = $newPack;
-					}
-				}else{
-					$this->server->getLogger()->warning("Skipped resource entry $pack due to file or directory not found");
+				if(!file_exists($packPath)){
+					throw new ResourcePackException("File or directory not found");
 				}
-			}catch(\Throwable $e){
-				$this->server->getLogger()->logException($e);
+				if(is_dir($packPath)){
+					throw new ResourcePackException("Directory resource packs are unsupported");
+				}
+
+				$newPack = null;
+				//Detect the type of resource pack.
+				$info = new \SplFileInfo($packPath);
+				switch($info->getExtension()){
+					case "zip":
+					case "mcpack":
+						$newPack = new ZippedResourcePack($packPath);
+						break;
+				}
+
+				if($newPack instanceof ResourcePack){
+					$this->resourcePacks[] = $newPack;
+					$this->uuidList[strtolower($newPack->getPackId())] = $newPack;
+				}else{
+					throw new ResourcePackException("Format not recognized");
+				}
+			}catch(ResourcePackException $e){
+				$logger->critical("Could not load resource pack \"$pack\": " . $e->getMessage());
 			}
 		}
 
-		$this->server->getLogger()->debug("Successfully loaded " . count($this->resourcePacks) . " resource packs");
+		$logger->debug("Successfully loaded " . count($this->resourcePacks) . " resource packs");
+	}
+
+	/**
+	 * Returns the directory which resource packs are loaded from.
+	 * @return string
+	 */
+	public function getPath() : string{
+		return $this->path;
 	}
 
 	/**
@@ -132,7 +141,7 @@ class ResourcePackManager{
 	 * @return ResourcePack|null
 	 */
 	public function getPackById(string $id){
-		return $this->uuidList[$id] ?? null;
+		return $this->uuidList[strtolower($id)] ?? null;
 	}
 
 	/**

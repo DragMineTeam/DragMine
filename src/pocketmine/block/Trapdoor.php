@@ -24,20 +24,19 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
 use pocketmine\level\sound\DoorSound;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
 class Trapdoor extends Transparent{
-	const MASK_UPPER = 0x04;
-	const MASK_OPENED = 0x08;
-	const MASK_SIDE = 0x03;
-	const MASK_SIDE_SOUTH = 2;
-	const MASK_SIDE_NORTH = 3;
-	const MASK_SIDE_EAST = 0;
-	const MASK_SIDE_WEST = 1;
+	public const MASK_UPPER = 0x04;
+	public const MASK_OPENED = 0x08;
+	public const MASK_SIDE = 0x03;
+	public const MASK_SIDE_SOUTH = 2;
+	public const MASK_SIDE_NORTH = 3;
+	public const MASK_SIDE_EAST = 0;
+	public const MASK_SIDE_WEST = 1;
 
 	protected $id = self::TRAPDOOR;
 
@@ -53,78 +52,35 @@ class Trapdoor extends Transparent{
 		return 3;
 	}
 
-	protected function recalculateBoundingBox(){
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
 
 		$damage = $this->getDamage();
 
 		$f = 0.1875;
 
 		if(($damage & self::MASK_UPPER) > 0){
-			$bb = new AxisAlignedBB(
-				$this->x,
-				$this->y + 1 - $f,
-				$this->z,
-				$this->x + 1,
-				$this->y + 1,
-				$this->z + 1
-			);
+			$bb = new AxisAlignedBB(0, 1 - $f, 0, 1, 1, 1);
 		}else{
-			$bb = new AxisAlignedBB(
-				$this->x,
-				$this->y,
-				$this->z,
-				$this->x + 1,
-				$this->y + $f,
-				$this->z + 1
-			);
+			$bb = new AxisAlignedBB(0, 0, 0, 1, $f, 1);
 		}
 
 		if(($damage & self::MASK_OPENED) > 0){
-			if(($damage & 0x03) === self::MASK_SIDE_NORTH){
-				$bb->setBounds(
-					$this->x,
-					$this->y,
-					$this->z + 1 - $f,
-					$this->x + 1,
-					$this->y + 1,
-					$this->z + 1
-				);
-			}elseif(($damage & 0x03) === self::MASK_SIDE_SOUTH){
-				$bb->setBounds(
-					$this->x,
-					$this->y,
-					$this->z,
-					$this->x + 1,
-					$this->y + 1,
-					$this->z + $f
-				);
-			}
-			if(($damage & 0x03) === self::MASK_SIDE_WEST){
-				$bb->setBounds(
-					$this->x + 1 - $f,
-					$this->y,
-					$this->z,
-					$this->x + 1,
-					$this->y + 1,
-					$this->z + 1
-				);
-			}
-			if(($damage & 0x03) === self::MASK_SIDE_EAST){
-				$bb->setBounds(
-					$this->x,
-					$this->y,
-					$this->z,
-					$this->x + $f,
-					$this->y + 1,
-					$this->z + 1
-				);
+			$side = $damage & 0x03;
+			if($side === self::MASK_SIDE_NORTH){
+				$bb->setBounds(0, 0, 1 - $f, 1, 1, 1);
+			}elseif($side === self::MASK_SIDE_SOUTH){
+				$bb->setBounds(0, 0, 0, 1, 1, $f);
+			}elseif($side === self::MASK_SIDE_WEST){
+				$bb->setBounds(1 - $f, 0, 0, 1, 1, 1);
+			}elseif($side === self::MASK_SIDE_EAST){
+				$bb->setBounds(0, 0, 0, $f, 1, 1);
 			}
 		}
 
 		return $bb;
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$directions = [
 			0 => 1,
 			1 => 3,
@@ -134,7 +90,7 @@ class Trapdoor extends Transparent{
 		if($player !== null){
 			$this->meta = $directions[$player->getDirection() & 0x03];
 		}
-		if(($facePos->y > 0.5 and $face !== self::SIDE_UP) or $face === self::SIDE_DOWN){
+		if(($clickVector->y > 0.5 and $face !== self::SIDE_UP) or $face === self::SIDE_DOWN){
 			$this->meta |= self::MASK_UPPER; //top half of block
 		}
 		$this->getLevel()->setBlock($blockReplace, $this, true, true);
@@ -153,7 +109,7 @@ class Trapdoor extends Transparent{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_AXE;
+		return BlockToolType::TYPE_AXE;
 	}
 
 	public function getFuelTime() : int{

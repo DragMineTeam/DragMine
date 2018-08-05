@@ -25,7 +25,7 @@ namespace pocketmine\command\defaults;
 
 use pocketmine\command\CommandSender;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
-use pocketmine\event\TranslationContainer;
+use pocketmine\lang\TranslationContainer;
 use pocketmine\Player;
 use pocketmine\utils\TextFormat;
 
@@ -50,9 +50,7 @@ class TellCommand extends VanillaCommand{
 			throw new InvalidCommandSyntaxException();
 		}
 
-		$name = strtolower(array_shift($args));
-
-		$player = $sender->getServer()->getPlayer($name);
+		$player = $sender->getServer()->getPlayer(array_shift($args));
 
 		if($player === $sender){
 			$sender->sendMessage(new TranslationContainer(TextFormat::RED . "%commands.message.sameTarget"));

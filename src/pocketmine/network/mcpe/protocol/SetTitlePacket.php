@@ -27,17 +27,17 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class SetTitlePacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::SET_TITLE_PACKET;
+	public const NETWORK_ID = ProtocolInfo::SET_TITLE_PACKET;
 
-	const TYPE_CLEAR_TITLE = 0;
-	const TYPE_RESET_TITLE = 1;
-	const TYPE_SET_TITLE = 2;
-	const TYPE_SET_SUBTITLE = 3;
-	const TYPE_SET_ACTIONBAR_MESSAGE = 4;
-	const TYPE_SET_ANIMATION_TIMES = 5;
+	public const TYPE_CLEAR_TITLE = 0;
+	public const TYPE_RESET_TITLE = 1;
+	public const TYPE_SET_TITLE = 2;
+	public const TYPE_SET_SUBTITLE = 3;
+	public const TYPE_SET_ACTIONBAR_MESSAGE = 4;
+	public const TYPE_SET_ANIMATION_TIMES = 5;
 
 	/** @var int */
 	public $type;
@@ -50,7 +50,7 @@ class SetTitlePacket extends DataPacket{
 	/** @var int */
 	public $fadeOutTime = 0;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->type = $this->getVarInt();
 		$this->text = $this->getString();
 		$this->fadeInTime = $this->getVarInt();
@@ -58,7 +58,7 @@ class SetTitlePacket extends DataPacket{
 		$this->fadeOutTime = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putVarInt($this->type);
 		$this->putString($this->text);
 		$this->putVarInt($this->fadeInTime);
@@ -66,7 +66,7 @@ class SetTitlePacket extends DataPacket{
 		$this->putVarInt($this->fadeOutTime);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleSetTitle($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleSetTitle($this);
 	}
 }

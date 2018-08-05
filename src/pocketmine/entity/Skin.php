@@ -47,7 +47,7 @@ class Skin{
 	public function isValid() : bool{
 		return (
 			$this->skinId !== "" and
-			(($s = strlen($this->skinData)) === 16384 or $s === 8192) and
+			(($s = strlen($this->skinData)) === 16384 or $s === 8192 or $s === 65536) and
 			($this->capeData === "" or strlen($this->capeData) === 8192)
 		);
 	}
@@ -87,4 +87,16 @@ class Skin{
 		return $this->geometryData;
 	}
 
+	/**
+	 * Hack to cut down on network overhead due to skins, by un-pretty-printing geometry JSON.
+	 *
+	 * Mojang, some stupid reason, send every single model for every single skin in the selected skin-pack.
+	 * Not only that, they are pretty-printed.
+	 * TODO: find out what model crap can be safely dropped from the packet (unless it gets fixed first)
+	 */
+	public function debloatGeometryData() : void{
+		if($this->geometryData !== ""){
+			$this->geometryData = (string) json_encode(json_decode($this->geometryData));
+		}
+	}
 }

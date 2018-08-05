@@ -25,12 +25,11 @@ namespace pocketmine\block;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
 class DoublePlant extends Flowable{
-	const BITFLAG_TOP = 0x08;
+	public const BITFLAG_TOP = 0x08;
 
 	protected $id = self::DOUBLE_PLANT;
 
@@ -51,10 +50,10 @@ class DoublePlant extends Flowable{
 			4 => "Rose Bush",
 			5 => "Peony"
 		];
-		return $names[$this->meta & 0x07] ?? "";
+		return $names[$this->getVariant()] ?? "";
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$id = $blockReplace->getSide(Vector3::SIDE_DOWN)->getId();
 		if(($id === Block::GRASS or $id === Block::DIRT) and $blockReplace->getSide(Vector3::SIDE_UP)->canBeReplaced()){
 			$this->getLevel()->setBlock($blockReplace, $this, false, false);
@@ -79,51 +78,50 @@ class DoublePlant extends Flowable{
 
 		return (
 			$other->getId() === $this->getId() and
-			($other->getDamage() & 0x07) === ($this->getDamage() & 0x07) and
+			$other->getVariant() === $this->getVariant() and
 			($other->getDamage() & self::BITFLAG_TOP) !== ($this->getDamage() & self::BITFLAG_TOP)
 		);
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			$down = $this->getSide(Vector3::SIDE_DOWN);
-			if(!$this->isValidHalfPlant() or (($this->meta & self::BITFLAG_TOP) === 0 and $down->isTransparent())){
-				$this->getLevel()->useBreakOn($this);
-
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
+	public function onNearbyBlockChange() : void{
+		if(!$this->isValidHalfPlant() or (($this->meta & self::BITFLAG_TOP) === 0 and $this->getSide(Vector3::SIDE_DOWN)->isTransparent())){
+			$this->getLevel()->useBreakOn($this);
 		}
-
-		return false;
-	}
-
-	public function onBreak(Item $item, Player $player = null) : bool{
-		if(parent::onBreak($item, $player) and $this->isValidHalfPlant()){
-			$this->getLevel()->useBreakOn($this->getSide(($this->meta & self::BITFLAG_TOP) !== 0 ? Vector3::SIDE_DOWN : Vector3::SIDE_UP), $item, $player, $player !== null);
-		}
-
-		return false;
 	}
 
 	public function getVariantBitmask() : int{
 		return 0x07;
 	}
 
+	public function getToolType() : int{
+		return ($this->meta === 2 or $this->meta === 3) ? BlockToolType::TYPE_SHEARS : BlockToolType::TYPE_NONE;
+	}
+
+	public function getToolHarvestLevel() : int{
+		return ($this->meta === 2 or $this->meta === 3) ? 1 : 0; //only grass or fern require shears
+	}
+
 	public function getDrops(Item $item) : array{
 		if($this->meta & self::BITFLAG_TOP){
-			if(!$item->isShears() and ($this->meta === 2 or $this->meta === 3)){ //grass or fern
-				if(mt_rand(0, 24) === 0){
-					return [
-						ItemFactory::get(Item::SEEDS, 0, 1)
-					];
-				}
-
-				return [];
+			if($this->isCompatibleWithTool($item)){
+				return parent::getDrops($item);
 			}
 
-			return parent::getDrops($item);
+			if(mt_rand(0, 24) === 0){
+				return [
+					ItemFactory::get(Item::SEEDS)
+				];
+			}
 		}
 
 		return [];
+	}
+
+	public function getAffectedBlocks() : array{
+		if($this->isValidHalfPlant()){
+			return [$this, $this->getSide(($this->meta & self::BITFLAG_TOP) !== 0 ? Vector3::SIDE_DOWN : Vector3::SIDE_UP)];
+		}
+
+		return parent::getAffectedBlocks();
 	}
 }

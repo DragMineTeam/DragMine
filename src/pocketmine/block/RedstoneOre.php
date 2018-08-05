@@ -25,8 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\item\Tool;
-use pocketmine\level\Level;
+use pocketmine\item\TieredTool;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
@@ -46,31 +45,33 @@ class RedstoneOre extends Solid{
 		return 3;
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		return $this->getLevel()->setBlock($this, $this, true, false);
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL or $type === Level::BLOCK_UPDATE_TOUCH){
-			$this->getLevel()->setBlock($this, BlockFactory::get(Block::GLOWING_REDSTONE_ORE, $this->meta));
+	public function onActivate(Item $item, Player $player = null) : bool{
+		return $this->getLevel()->setBlock($this, BlockFactory::get(Block::GLOWING_REDSTONE_ORE, $this->meta));
+	}
 
-			return Level::BLOCK_UPDATE_WEAK;
-		}
-
-		return false;
+	public function onNearbyBlockChange() : void{
+		$this->getLevel()->setBlock($this, BlockFactory::get(Block::GLOWING_REDSTONE_ORE, $this->meta));
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_PICKAXE;
+		return BlockToolType::TYPE_PICKAXE;
 	}
 
-	public function getDrops(Item $item) : array{
-		if($item->isPickaxe() >= Tool::TIER_IRON){
-			return [
-				ItemFactory::get(Item::REDSTONE_DUST, 0, mt_rand(4, 5))
-			];
-		}
+	public function getToolHarvestLevel() : int{
+		return TieredTool::TIER_IRON;
+	}
 
-		return [];
+	public function getDropsForCompatibleTool(Item $item) : array{
+		return [
+			ItemFactory::get(Item::REDSTONE_DUST, 0, mt_rand(4, 5))
+		];
+	}
+
+	protected function getXpDropAmount() : int{
+		return mt_rand(1, 5);
 	}
 }

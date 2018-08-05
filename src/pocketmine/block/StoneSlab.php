@@ -23,22 +23,23 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\item\Item;
-use pocketmine\item\Tool;
+use pocketmine\item\TieredTool;
 
-class StoneSlab extends WoodenSlab{
-	const STONE = 0;
-	const SANDSTONE = 1;
-	const WOODEN = 2;
-	const COBBLESTONE = 3;
-	const BRICK = 4;
-	const STONE_BRICK = 5;
-	const QUARTZ = 6;
-	const NETHER_BRICK = 7;
+class StoneSlab extends Slab{
+	public const STONE = 0;
+	public const SANDSTONE = 1;
+	public const WOODEN = 2;
+	public const COBBLESTONE = 3;
+	public const BRICK = 4;
+	public const STONE_BRICK = 5;
+	public const QUARTZ = 6;
+	public const NETHER_BRICK = 7;
 
 	protected $id = self::STONE_SLAB;
 
-	protected $doubleId = self::DOUBLE_STONE_SLAB;
+	public function getDoubleSlabId() : int{
+		return self::DOUBLE_STONE_SLAB;
+	}
 
 	public function getHardness() : float{
 		return 2;
@@ -55,22 +56,14 @@ class StoneSlab extends WoodenSlab{
 			self::QUARTZ => "Quartz",
 			self::NETHER_BRICK => "Nether Brick"
 		];
-		return (($this->meta & 0x08) > 0 ? "Upper " : "") . $names[$this->meta & 0x07] . " Slab";
+		return (($this->meta & 0x08) > 0 ? "Upper " : "") . ($names[$this->getVariant()] ?? "") . " Slab";
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_PICKAXE;
+		return BlockToolType::TYPE_PICKAXE;
 	}
 
-	public function getDrops(Item $item) : array{
-		if($item->isPickaxe() >= Tool::TIER_WOODEN){
-			return parent::getDrops($item);
-		}
-
-		return [];
-	}
-
-	public function getFuelTime() : int{
-		return 0;
+	public function getToolHarvestLevel() : int{
+		return TieredTool::TIER_WOODEN;
 	}
 }

@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\item\Item;
-use pocketmine\level\Level;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
@@ -45,19 +44,12 @@ class WaterLily extends Flowable{
 		return 0.6;
 	}
 
-	protected function recalculateBoundingBox(){
-		return new AxisAlignedBB(
-			$this->x + 0.0625,
-			$this->y,
-			$this->z + 0.0625,
-			$this->x + 0.9375,
-			$this->y + 0.015625,
-			$this->z + 0.9375
-		);
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		static $f = 0.0625;
+		return new AxisAlignedBB($f, 0, $f, 1 - $f, 0.015625, 1 - $f);
 	}
 
-
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		if($blockClicked instanceof Water){
 			$up = $blockClicked->getSide(Vector3::SIDE_UP);
 			if($up->getId() === Block::AIR){
@@ -69,15 +61,10 @@ class WaterLily extends Flowable{
 		return false;
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if(!($this->getSide(Vector3::SIDE_DOWN) instanceof Water)){
-				$this->getLevel()->useBreakOn($this);
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
+	public function onNearbyBlockChange() : void{
+		if(!($this->getSide(Vector3::SIDE_DOWN) instanceof Water)){
+			$this->getLevel()->useBreakOn($this);
 		}
-
-		return false;
 	}
 
 	public function getVariantBitmask() : int{

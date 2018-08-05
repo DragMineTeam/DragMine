@@ -27,12 +27,11 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 use pocketmine\resourcepacks\ResourcePack;
-use pocketmine\resourcepacks\ResourcePackInfoEntry;
 
 class ResourcePackStackPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::RESOURCE_PACK_STACK_PACKET;
+	public const NETWORK_ID = ProtocolInfo::RESOURCE_PACK_STACK_PACKET;
 
 	/** @var bool */
 	public $mustAccept = false;
@@ -42,7 +41,7 @@ class ResourcePackStackPacket extends DataPacket{
 	/** @var ResourcePack[] */
 	public $resourcePackStack = [];
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		/*$this->mustAccept = $this->getBool();
 		$behaviorPackCount = $this->getUnsignedVarInt();
 		while($behaviorPackCount-- > 0){
@@ -59,25 +58,25 @@ class ResourcePackStackPacket extends DataPacket{
 		}*/
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putBool($this->mustAccept);
 
 		$this->putUnsignedVarInt(count($this->behaviorPackStack));
 		foreach($this->behaviorPackStack as $entry){
 			$this->putString($entry->getPackId());
 			$this->putString($entry->getPackVersion());
-			$this->putString(""); //TODO
+			$this->putString(""); //TODO: subpack name
 		}
 
 		$this->putUnsignedVarInt(count($this->resourcePackStack));
 		foreach($this->resourcePackStack as $entry){
 			$this->putString($entry->getPackId());
 			$this->putString($entry->getPackVersion());
-			$this->putString(""); //TODO
+			$this->putString(""); //TODO: subpack name
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleResourcePackStack($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleResourcePackStack($this);
 	}
 }

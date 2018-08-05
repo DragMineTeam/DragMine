@@ -25,8 +25,7 @@ namespace pocketmine\block;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\item\Tool;
-use pocketmine\level\Level;
+use pocketmine\item\TieredTool;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
@@ -51,14 +50,14 @@ class SnowLayer extends Flowable{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_SHOVEL;
+		return BlockToolType::TYPE_SHOVEL;
 	}
 
-	public function ticksRandomly() : bool{
-		return true;
+	public function getToolHarvestLevel() : int{
+		return TieredTool::TIER_WOODEN;
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		if($blockReplace->getSide(Vector3::SIDE_DOWN)->isSolid()){
 			//TODO: fix placement
 			$this->getLevel()->setBlock($blockReplace, $this, true);
@@ -69,31 +68,29 @@ class SnowLayer extends Flowable{
 		return false;
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if(!$this->getSide(Vector3::SIDE_DOWN)->isSolid()){
-				$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), false, false);
-
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
-		}elseif($type === Level::BLOCK_UPDATE_RANDOM){
-			if($this->level->getBlockLightAt($this->x, $this->y, $this->z) >= 12){
-				$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), false, false);
-
-				return Level::BLOCK_UPDATE_RANDOM;
-			}
+	public function onNearbyBlockChange() : void{
+		if(!$this->getSide(Vector3::SIDE_DOWN)->isSolid()){
+			$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), false, false);
 		}
-
-		return false;
 	}
 
-	public function getDrops(Item $item) : array{
-		if($item->isShovel() !== false){
-			return [
-				ItemFactory::get(Item::SNOWBALL, 0, 1) //TODO: check layer count
-			];
-		}
+	public function ticksRandomly() : bool{
+		return true;
+	}
 
-		return [];
+	public function onRandomTick() : void{
+		if($this->level->getBlockLightAt($this->x, $this->y, $this->z) >= 12){
+			$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), false, false);
+		}
+	}
+
+	public function getDropsForCompatibleTool(Item $item) : array{
+		return [
+			ItemFactory::get(Item::SNOWBALL) //TODO: check layer count
+		];
+	}
+
+	public function isAffectedBySilkTouch() : bool{
+		return false;
 	}
 }

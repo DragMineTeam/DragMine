@@ -26,36 +26,36 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class PlayerActionPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::PLAYER_ACTION_PACKET;
+	public const NETWORK_ID = ProtocolInfo::PLAYER_ACTION_PACKET;
 
-	const ACTION_START_BREAK = 0;
-	const ACTION_ABORT_BREAK = 1;
-	const ACTION_STOP_BREAK = 2;
-	const ACTION_GET_UPDATED_BLOCK = 3;
-	const ACTION_DROP_ITEM = 4;
-	const ACTION_START_SLEEPING = 5;
-	const ACTION_STOP_SLEEPING = 6;
-	const ACTION_RESPAWN = 7;
-	const ACTION_JUMP = 8;
-	const ACTION_START_SPRINT = 9;
-	const ACTION_STOP_SPRINT = 10;
-	const ACTION_START_SNEAK = 11;
-	const ACTION_STOP_SNEAK = 12;
-	const ACTION_DIMENSION_CHANGE_REQUEST = 13; //sent when dying in different dimension
-	const ACTION_DIMENSION_CHANGE_ACK = 14; //sent when spawning in a different dimension to tell the server we spawned
-	const ACTION_START_GLIDE = 15;
-	const ACTION_STOP_GLIDE = 16;
-	const ACTION_BUILD_DENIED = 17;
-	const ACTION_CONTINUE_BREAK = 18;
-	const ACTION_CHANGE_SKIN = 19;
-	const ACTION_SET_ENCHANTMENT_SEED = 20;
-	const ACTION_START_SWIMMING = 21;
-	const ACTION_STOP_SWIMMING = 22;
-	const ACTION_START_SPIN_ATTACK = 23;
-	const ACTION_STOP_SPIN_ATTACK = 24;
+	public const ACTION_START_BREAK = 0;
+	public const ACTION_ABORT_BREAK = 1;
+	public const ACTION_STOP_BREAK = 2;
+	public const ACTION_GET_UPDATED_BLOCK = 3;
+	public const ACTION_DROP_ITEM = 4;
+	public const ACTION_START_SLEEPING = 5;
+	public const ACTION_STOP_SLEEPING = 6;
+	public const ACTION_RESPAWN = 7;
+	public const ACTION_JUMP = 8;
+	public const ACTION_START_SPRINT = 9;
+	public const ACTION_STOP_SPRINT = 10;
+	public const ACTION_START_SNEAK = 11;
+	public const ACTION_STOP_SNEAK = 12;
+	public const ACTION_DIMENSION_CHANGE_REQUEST = 13; //sent when dying in different dimension
+	public const ACTION_DIMENSION_CHANGE_ACK = 14; //sent when spawning in a different dimension to tell the server we spawned
+	public const ACTION_START_GLIDE = 15;
+	public const ACTION_STOP_GLIDE = 16;
+	public const ACTION_BUILD_DENIED = 17;
+	public const ACTION_CONTINUE_BREAK = 18;
+
+	public const ACTION_SET_ENCHANTMENT_SEED = 20;
+	public const ACTION_START_SWIMMING = 21;
+	public const ACTION_STOP_SWIMMING = 22;
+	public const ACTION_START_SPIN_ATTACK = 23;
+	public const ACTION_STOP_SPIN_ATTACK = 24;
 
 	/** @var int */
 	public $entityRuntimeId;
@@ -70,22 +70,21 @@ class PlayerActionPacket extends DataPacket{
 	/** @var int */
 	public $face;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->action = $this->getVarInt();
 		$this->getBlockPosition($this->x, $this->y, $this->z);
 		$this->face = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putVarInt($this->action);
 		$this->putBlockPosition($this->x, $this->y, $this->z);
 		$this->putVarInt($this->face);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handlePlayerAction($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handlePlayerAction($this);
 	}
-
 }

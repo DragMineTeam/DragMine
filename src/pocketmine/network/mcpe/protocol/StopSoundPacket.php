@@ -27,27 +27,27 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class StopSoundPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::STOP_SOUND_PACKET;
+	public const NETWORK_ID = ProtocolInfo::STOP_SOUND_PACKET;
 
 	/** @var string */
 	public $soundName;
 	/** @var bool */
 	public $stopAll;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->soundName = $this->getString();
 		$this->stopAll = $this->getBool();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putString($this->soundName);
 		$this->putBool($this->stopAll);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleStopSound($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleStopSound($this);
 	}
 }

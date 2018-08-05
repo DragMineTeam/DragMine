@@ -23,27 +23,40 @@ declare(strict_types=1);
 
 namespace pocketmine\inventory;
 
+use pocketmine\entity\Entity;
 use pocketmine\math\Vector3;
 use pocketmine\network\mcpe\protocol\ContainerClosePacket;
 use pocketmine\network\mcpe\protocol\ContainerOpenPacket;
 use pocketmine\Player;
 
 abstract class ContainerInventory extends BaseInventory{
+	/** @var Vector3 */
+	protected $holder;
+
+	public function __construct(Vector3 $holder, array $items = [], int $size = null, string $title = null){
+		$this->holder = $holder;
+		parent::__construct($items, $size, $title);
+	}
+
 	public function onOpen(Player $who) : void{
 		parent::onOpen($who);
 		$pk = new ContainerOpenPacket();
 		$pk->windowId = $who->getWindowId($this);
 		$pk->type = $this->getNetworkType();
 		$holder = $this->getHolder();
-		if($holder instanceof Vector3){
-			$pk->x = $holder->getX();
-			$pk->y = $holder->getY();
-			$pk->z = $holder->getZ();
-		}else{
-			$pk->x = $pk->y = $pk->z = 0;
+
+		$pk->x = $pk->y = $pk->z = 0;
+		$pk->entityUniqueId = -1;
+
+		if($holder instanceof Entity){
+			$pk->entityUniqueId = $holder->getId();
+		}elseif($holder instanceof Vector3){
+			$pk->x = $holder->getFloorX();
+			$pk->y = $holder->getFloorY();
+			$pk->z = $holder->getFloorZ();
 		}
 
-		$who->dataPacket($pk);
+		$who->sendDataPacket($pk);
 
 		$this->sendContents($who);
 	}
@@ -51,7 +64,7 @@ abstract class ContainerInventory extends BaseInventory{
 	public function onClose(Player $who) : void{
 		$pk = new ContainerClosePacket();
 		$pk->windowId = $who->getWindowId($this);
-		$who->dataPacket($pk);
+		$who->sendDataPacket($pk);
 		parent::onClose($who);
 	}
 
@@ -60,4 +73,11 @@ abstract class ContainerInventory extends BaseInventory{
 	 * @return int
 	 */
 	abstract public function getNetworkType() : int;
+
+	/**
+	 * @return Vector3
+	 */
+	public function getHolder(){
+		return $this->holder;
+	}
 }

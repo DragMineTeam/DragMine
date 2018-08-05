@@ -25,13 +25,13 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class AddHangingEntityPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::ADD_HANGING_ENTITY_PACKET;
+	public const NETWORK_ID = ProtocolInfo::ADD_HANGING_ENTITY_PACKET;
 
-	/** @var int */
-	public $entityUniqueId;
+	/** @var int|null */
+	public $entityUniqueId = null;
 	/** @var int */
 	public $entityRuntimeId;
 	/** @var int */
@@ -41,24 +41,23 @@ class AddHangingEntityPacket extends DataPacket{
 	/** @var int */
 	public $z;
 	/** @var int */
-	public $unknown; //TODO (rotation?)
+	public $direction;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->getBlockPosition($this->x, $this->y, $this->z);
-		$this->unknown = $this->getVarInt();
+		$this->direction = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
-		$this->putEntityUniqueId($this->entityUniqueId);
+	protected function encodePayload() : void{
+		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putBlockPosition($this->x, $this->y, $this->z);
-		$this->putVarInt($this->unknown);
+		$this->putVarInt($this->direction);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleAddHangingEntity($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleAddHangingEntity($this);
 	}
-
 }

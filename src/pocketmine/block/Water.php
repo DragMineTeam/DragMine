@@ -26,6 +26,7 @@ namespace pocketmine\block;
 use pocketmine\entity\Entity;
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
+use pocketmine\network\mcpe\protocol\LevelSoundEventPacket;
 use pocketmine\Player;
 
 class Water extends Liquid{
@@ -44,7 +45,27 @@ class Water extends Liquid{
 		return 2;
 	}
 
-	public function onEntityCollide(Entity $entity){
+	public function getStillForm() : Block{
+		return BlockFactory::get(Block::STILL_WATER, $this->meta);
+	}
+
+	public function getFlowingForm() : Block{
+		return BlockFactory::get(Block::FLOWING_WATER, $this->meta);
+	}
+
+	public function getBucketFillSound() : int{
+		return LevelSoundEventPacket::SOUND_BUCKET_FILL_WATER;
+	}
+
+	public function getBucketEmptySound() : int{
+		return LevelSoundEventPacket::SOUND_BUCKET_EMPTY_WATER;
+	}
+
+	public function tickRate() : int{
+		return 5;
+	}
+
+	public function onEntityCollide(Entity $entity) : void{
 		$entity->resetFallDistance();
 		if($entity->fireTicks > 0){
 			$entity->extinguish();
@@ -53,7 +74,7 @@ class Water extends Liquid{
 		$entity->resetFallDistance();
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$ret = $this->getLevel()->setBlock($this, $this, true, false);
 		$this->getLevel()->scheduleDelayedBlockUpdate($this, $this->tickRate());
 

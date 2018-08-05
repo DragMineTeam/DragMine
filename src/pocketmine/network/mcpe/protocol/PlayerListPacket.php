@@ -27,14 +27,14 @@ namespace pocketmine\network\mcpe\protocol;
 
 
 use pocketmine\entity\Skin;
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 use pocketmine\network\mcpe\protocol\types\PlayerListEntry;
 
 class PlayerListPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::PLAYER_LIST_PACKET;
+	public const NETWORK_ID = ProtocolInfo::PLAYER_LIST_PACKET;
 
-	const TYPE_ADD = 0;
-	const TYPE_REMOVE = 1;
+	public const TYPE_ADD = 0;
+	public const TYPE_REMOVE = 1;
 
 	/** @var PlayerListEntry[] */
 	public $entries = [];
@@ -46,7 +46,7 @@ class PlayerListPacket extends DataPacket{
 		return parent::clean();
 	}
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->type = $this->getByte();
 		$count = $this->getUnsignedVarInt();
 		for($i = 0; $i < $count; ++$i){
@@ -71,9 +71,9 @@ class PlayerListPacket extends DataPacket{
 					$capeData,
 					$geometryName,
 					$geometryData
-  				);
-  				$entry->xboxUserId = $this->getString();
-				$this->getString(); //unknown
+				);
+				$entry->xboxUserId = $this->getString();
+				$entry->platformChatId = $this->getString();
 			}else{
 				$entry->uuid = $this->getUUID();
 			}
@@ -82,7 +82,7 @@ class PlayerListPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putByte($this->type);
 		$this->putUnsignedVarInt(count($this->entries));
 		foreach($this->entries as $entry){
@@ -98,15 +98,14 @@ class PlayerListPacket extends DataPacket{
 				$this->putString($entry->skin->getGeometryName());
 				$this->putString($entry->skin->getGeometryData());
 				$this->putString($entry->xboxUserId);
-				$this->putString("");
+				$this->putString($entry->platformChatId);
 			}else{
 				$this->putUUID($entry->uuid);
 			}
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handlePlayerList($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handlePlayerList($this);
 	}
-
 }

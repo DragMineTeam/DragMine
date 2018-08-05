@@ -24,22 +24,21 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\item\Item;
-use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
 class Rail extends Flowable{
 
-	const STRAIGHT_NORTH_SOUTH = 0;
-	const STRAIGHT_EAST_WEST = 1;
-	const ASCENDING_EAST = 2;
-	const ASCENDING_WEST = 3;
-	const ASCENDING_NORTH = 4;
-	const ASCENDING_SOUTH = 5;
-	const CURVE_SOUTHEAST = 6;
-	const CURVE_SOUTHWEST = 7;
-	const CURVE_NORTHWEST = 8;
-	const CURVE_NORTHEAST = 9;
+	public const STRAIGHT_NORTH_SOUTH = 0;
+	public const STRAIGHT_EAST_WEST = 1;
+	public const ASCENDING_EAST = 2;
+	public const ASCENDING_WEST = 3;
+	public const ASCENDING_NORTH = 4;
+	public const ASCENDING_SOUTH = 5;
+	public const CURVE_SOUTHEAST = 6;
+	public const CURVE_SOUTHWEST = 7;
+	public const CURVE_NORTHWEST = 8;
+	public const CURVE_NORTHEAST = 9;
 
 	protected $id = self::RAIL;
 
@@ -55,7 +54,7 @@ class Rail extends Flowable{
 		return 0.7;
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		if(!$blockReplace->getSide(Vector3::SIDE_DOWN)->isTransparent()){
 			return $this->getLevel()->setBlock($blockReplace, $this, true, true);
 		}
@@ -63,17 +62,12 @@ class Rail extends Flowable{
 		return false;
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if($this->getSide(Vector3::SIDE_DOWN)->isTransparent()){
-				$this->getLevel()->useBreakOn($this);
-				return $type;
-			}else{
-				//TODO: Update rail connectivity
-			}
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_DOWN)->isTransparent()){
+			$this->getLevel()->useBreakOn($this);
+		}else{
+			//TODO: Update rail connectivity
 		}
-
-		return false;
 	}
 
 	public function getVariantBitmask() : int{

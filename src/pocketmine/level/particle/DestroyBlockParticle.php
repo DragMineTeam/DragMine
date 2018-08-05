@@ -30,6 +30,7 @@ use pocketmine\network\mcpe\protocol\LevelEventPacket;
 
 class DestroyBlockParticle extends Particle{
 
+	/** @var int */
 	protected $data;
 
 	public function __construct(Vector3 $pos, Block $b){

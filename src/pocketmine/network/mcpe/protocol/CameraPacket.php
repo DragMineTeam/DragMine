@@ -25,27 +25,27 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class CameraPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::CAMERA_PACKET;
+	public const NETWORK_ID = ProtocolInfo::CAMERA_PACKET;
 
 	/** @var int */
 	public $cameraUniqueId;
 	/** @var int */
 	public $playerUniqueId;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->cameraUniqueId = $this->getEntityUniqueId();
 		$this->playerUniqueId = $this->getEntityUniqueId();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityUniqueId($this->cameraUniqueId);
 		$this->putEntityUniqueId($this->playerUniqueId);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleCamera($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleCamera($this);
 	}
 }

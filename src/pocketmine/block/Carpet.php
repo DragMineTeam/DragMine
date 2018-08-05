@@ -25,7 +25,6 @@ namespace pocketmine\block;
 
 use pocketmine\block\utils\ColorBlockMetaHelper;
 use pocketmine\item\Item;
-use pocketmine\level\Level;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
@@ -50,19 +49,11 @@ class Carpet extends Flowable{
 		return ColorBlockMetaHelper::getColorFromMeta($this->meta) . " Carpet";
 	}
 
-	protected function recalculateBoundingBox(){
-
-		return new AxisAlignedBB(
-			$this->x,
-			$this->y,
-			$this->z,
-			$this->x + 1,
-			$this->y + 0.0625,
-			$this->z + 1
-		);
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		return new AxisAlignedBB(0, 0, 0, 1, 0.0625, 1);
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$down = $this->getSide(Vector3::SIDE_DOWN);
 		if($down->getId() !== self::AIR){
 			$this->getLevel()->setBlock($blockReplace, $this, true, true);
@@ -73,16 +64,17 @@ class Carpet extends Flowable{
 		return false;
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if($this->getSide(Vector3::SIDE_DOWN)->getId() === self::AIR){
-				$this->getLevel()->useBreakOn($this);
-
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_DOWN)->getId() === self::AIR){
+			$this->getLevel()->useBreakOn($this);
 		}
-
-		return false;
 	}
 
+	public function getFlameEncouragement() : int{
+		return 30;
+	}
+
+	public function getFlammability() : int{
+		return 20;
+	}
 }

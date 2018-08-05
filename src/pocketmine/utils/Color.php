@@ -30,26 +30,6 @@ class Color{
 	/** @var int */
 	protected $a, $r, $g, $b;
 
-	/** @var \SplFixedArray */
-	public static $dyeColors = null;
-
-	const COLOR_DYE_BLACK = 0;//dye colors
-	const COLOR_DYE_RED = 1;
-	const COLOR_DYE_GREEN = 2;
-	const COLOR_DYE_BROWN = 3;
-	const COLOR_DYE_BLUE = 4;
-	const COLOR_DYE_PURPLE = 5;
-	const COLOR_DYE_CYAN = 6;
-	const COLOR_DYE_LIGHT_GRAY = 7;
-	const COLOR_DYE_GRAY = 8;
-	const COLOR_DYE_PINK = 9;
-	const COLOR_DYE_LIME = 10;
-	const COLOR_DYE_YELLOW = 11;
-	const COLOR_DYE_LIGHT_BLUE = 12;
-	const COLOR_DYE_MAGENTA = 13;
-	const COLOR_DYE_ORANGE = 14;
-	const COLOR_DYE_WHITE = 15;
-
 	public function __construct(int $r, int $g, int $b, int $a = 0xff){
 		$this->r = $r & 0xff;
 		$this->g = $g & 0xff;
@@ -57,34 +37,8 @@ class Color{
 		$this->a = $a & 0xff;
 	}
 
-	public static function init(){
-		if(self::$dyeColors === null){
-			self::$dyeColors = new \SplFixedArray(16);
-			self::$dyeColors[self::COLOR_DYE_BLACK] = Color::getRGB(30, 27, 27);
-			self::$dyeColors[self::COLOR_DYE_RED] = Color::getRGB(179, 49, 44);
-			self::$dyeColors[self::COLOR_DYE_GREEN] = Color::getRGB(61, 81, 26);
-			self::$dyeColors[self::COLOR_DYE_BROWN] = Color::getRGB(81, 48, 26);
-			self::$dyeColors[self::COLOR_DYE_BLUE] = Color::getRGB(37, 49, 146);
-			self::$dyeColors[self::COLOR_DYE_PURPLE] = Color::getRGB(123, 47, 190);
-			self::$dyeColors[self::COLOR_DYE_CYAN] = Color::getRGB(40, 118, 151);
-			self::$dyeColors[self::COLOR_DYE_LIGHT_GRAY] = Color::getRGB(153, 153, 153);
-			self::$dyeColors[self::COLOR_DYE_GRAY] = Color::getRGB(67, 67, 67);
-			self::$dyeColors[self::COLOR_DYE_PINK] = Color::getRGB(216, 129, 152);
-			self::$dyeColors[self::COLOR_DYE_LIME] = Color::getRGB(65, 205, 52);
-			self::$dyeColors[self::COLOR_DYE_YELLOW] = Color::getRGB(222, 207, 42);
-			self::$dyeColors[self::COLOR_DYE_LIGHT_BLUE] = Color::getRGB(102, 137, 211);
-			self::$dyeColors[self::COLOR_DYE_MAGENTA] = Color::getRGB(195, 84, 205);
-			self::$dyeColors[self::COLOR_DYE_ORANGE] = Color::getRGB(235, 136, 68);
-			self::$dyeColors[self::COLOR_DYE_WHITE] = Color::getRGB(240, 240, 240);
-		}
-	}
-
-	public static function getRGB($r, $g, $b){
-		return new Color((int) $r, (int) $g, (int) $b);
-	}
-
 	/**
-	 * Returns the alpha (transparency) value of this colour.
+	 * Returns the alpha (opacity) value of this colour.
 	 * @return int
 	 */
 	public function getA() : int{
@@ -148,6 +102,30 @@ class Color{
 	}
 
 	/**
+	 * Mixes the supplied list of colours together to produce a result colour.
+	 *
+	 * @param Color ...$colors
+	 * @return Color
+	 */
+	public static function mix(Color ...$colors) : Color{
+		$count = count($colors);
+		if($count < 1){
+			throw new \ArgumentCountError("No colors given");
+		}
+
+		$a = $r = $g = $b = 0;
+
+		foreach($colors as $color){
+			$a += $color->a;
+			$r += $color->r;
+			$g += $color->g;
+			$b += $color->b;
+		}
+
+		return new Color((int) ($r / $count), (int) ($g / $count), (int) ($b / $count), (int) ($a / $count));
+	}
+
+	/**
 	 * Returns a Color from the supplied RGB colour code (24-bit)
 	 * @param int $code
 	 *
@@ -200,68 +178,7 @@ class Color{
 		return ($this->a << 24) | ($this->b << 16) | ($this->g << 8) | $this->r;
 	}
 
-	/**
-	 * Returns a HSV color array
-	 * @return array['h','s','v']
-	 */
-	public function toHSV() {
-		$r = $this->getR();
-		$g = $this->getG();
-		$b = $this->getB();
-		$max = max($r, $g, $b);
-		$min = min($r, $g, $b);
-		$hsv = array('v' => $max / 2.55, 's' => (!$max) ? 0 : (1 - ($min / $max)) * 100, 'h' => 0);
-		$dmax = $max - $min;
-		if (!$dmax) return $hsv;
-		if ($max == $r) {
-			if ($g < $b) {
-				$hsv['h'] = ($g - $b) * 60;
-			} elseif ($g == $b) {
-				$hsv['h'] = 360;
-			} else {
-				$hsv['h'] = ((($g - $b) / $dmax) * 60) + 360;
-			}
-		} elseif ($max == $g) {
-			$hsv['h'] = ((($b - $r) / $dmax) * 60) + 120;
-		} else {
-			$hsv['h'] = ((($r - $g) / $dmax) * 60) + 240;
-		}
-		return $hsv;
-	}
-
 	public static function fromABGR(int $code){
 		return new Color($code & 0xff, ($code >> 8) & 0xff, ($code >> 16) & 0xff, ($code >> 24) & 0xff);
-	}
-
-	public static function getDyeColor($id){
-		if(isset(self::$dyeColors[$id])){
-			return clone self::$dyeColors[$id];
-		}
-		return Color::getRGB(0, 0, 0);
-	}
-
-	public function getColorCode(){
-		return ($this->r << 16 | $this->g << 8 | $this->b) & 0xffffff;
-	}
-
-	/**
-	 * Returns the logical distance between 2 colors, respecting weight
-	 * @param Color $c1
-	 * @param Color $c2
-	 * @return int
-	 */
-	public static function getDistance(Color $c1, Color $c2) {
-		$rmean = ($c1->getR() + $c2->getR()) / 2.0;
-		$r = $c1->getR() - $c2->getR();
-		$g = $c1->getG() - $c2->getG();
-		$b = $c1->getB() - $c2->getB();
-		$weightR = 2 + $rmean / 256;
-		$weightG = 4;
-		$weightB = 2 + (255 - $rmean) / 256;
-		return $weightR * $r * $r + $weightG * $g * $g + $weightB * $b * $b;
-	}
-
-	public function __toString() {
-		return "Color(r:" . $this->r . ", g:" . $this->g . ", b:" . $this->b . ", a:" . $this->a . ")";
 	}
 }

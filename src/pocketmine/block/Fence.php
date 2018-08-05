@@ -23,73 +23,86 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\item\Tool;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 
-class Fence extends Transparent{
-	const FENCE_OAK = 0;
-	const FENCE_SPRUCE = 1;
-	const FENCE_BIRCH = 2;
-	const FENCE_JUNGLE = 3;
-	const FENCE_ACACIA = 4;
-	const FENCE_DARKOAK = 5;
-
-	protected $id = self::FENCE;
+abstract class Fence extends Transparent{
 
 	public function __construct(int $meta = 0){
 		$this->meta = $meta;
 	}
 
-	public function getHardness() : float{
-		return 2;
+	public function getThickness() : float{
+		return 0.25;
 	}
 
-	public function getToolType() : int{
-		return Tool::TYPE_AXE;
-	}
-
-
-	public function getName() : string{
-		static $names = [
-			self::FENCE_OAK => "Oak Fence",
-			self::FENCE_SPRUCE => "Spruce Fence",
-			self::FENCE_BIRCH => "Birch Fence",
-			self::FENCE_JUNGLE => "Jungle Fence",
-			self::FENCE_ACACIA => "Acacia Fence",
-			self::FENCE_DARKOAK => "Dark Oak Fence"
-		];
-		return $names[$this->meta & 0x07] ?? "Unknown";
-	}
-
-	protected function recalculateBoundingBox(){
-
-		$north = $this->canConnect($this->getSide(Vector3::SIDE_NORTH));
-		$south = $this->canConnect($this->getSide(Vector3::SIDE_SOUTH));
-		$west = $this->canConnect($this->getSide(Vector3::SIDE_WEST));
-		$east = $this->canConnect($this->getSide(Vector3::SIDE_EAST));
-
-		$n = $north ? 0 : 0.375;
-		$s = $south ? 1 : 0.625;
-		$w = $west ? 0 : 0.375;
-		$e = $east ? 1 : 0.625;
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		$width = 0.5 - $this->getThickness() / 2;
 
 		return new AxisAlignedBB(
-			$this->x + $w,
-			$this->y,
-			$this->z + $n,
-			$this->x + $e,
-			$this->y + 1.5,
-			$this->z + $s
+			($this->canConnect($this->getSide(Vector3::SIDE_WEST)) ? 0 : $width),
+			0,
+			($this->canConnect($this->getSide(Vector3::SIDE_NORTH)) ? 0 : $width),
+			1 - ($this->canConnect($this->getSide(Vector3::SIDE_EAST)) ? 0 : $width),
+			1.5,
+			1 - ($this->canConnect($this->getSide(Vector3::SIDE_SOUTH)) ? 0 : $width)
 		);
 	}
 
+	protected function recalculateCollisionBoxes() : array{
+		$inset = 0.5 - $this->getThickness() / 2;
+
+		/** @var AxisAlignedBB[] $bbs */
+		$bbs = [];
+
+		$connectWest = $this->canConnect($this->getSide(Vector3::SIDE_WEST));
+		$connectEast = $this->canConnect($this->getSide(Vector3::SIDE_EAST));
+
+		if($connectWest or $connectEast){
+			//X axis (west/east)
+			$bbs[] = new AxisAlignedBB(
+				($connectWest ? 0 : $inset),
+				0,
+				$inset,
+				1 - ($connectEast ? 0 : $inset),
+				1.5,
+				1 - $inset
+			);
+		}
+
+		$connectNorth = $this->canConnect($this->getSide(Vector3::SIDE_NORTH));
+		$connectSouth = $this->canConnect($this->getSide(Vector3::SIDE_SOUTH));
+
+		if($connectNorth or $connectSouth){
+			//Z axis (north/south)
+			$bbs[] = new AxisAlignedBB(
+				$inset,
+				0,
+				($connectNorth ? 0 : $inset),
+				1 - $inset,
+				1.5,
+				1 - ($connectSouth ? 0 : $inset)
+			);
+		}
+
+		if(empty($bbs)){
+			//centre post AABB (only needed if not connected on any axis - other BBs overlapping will do this if any connections are made)
+			return [
+				new AxisAlignedBB(
+					$inset,
+					0,
+					$inset,
+					1 - $inset,
+					1.5,
+					1 - $inset
+				)
+			];
+		}
+
+		return $bbs;
+	}
+
 	public function canConnect(Block $block){
-		return ($block instanceof Fence or $block instanceof FenceGate) ? true : $block->isSolid() and !$block->isTransparent();
+		return $block instanceof static or $block instanceof FenceGate or ($block->isSolid() and !$block->isTransparent());
 	}
-
-	public function getFuelTime() : int{
-		return 300;
-	}
-
 }

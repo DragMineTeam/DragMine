@@ -27,27 +27,27 @@ namespace pocketmine\network\mcpe\protocol;
 
 
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class SpawnExperienceOrbPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::SPAWN_EXPERIENCE_ORB_PACKET;
+	public const NETWORK_ID = ProtocolInfo::SPAWN_EXPERIENCE_ORB_PACKET;
 
 	/** @var Vector3 */
 	public $position;
 	/** @var int */
 	public $amount;
 
-	protected function decodePayload(){
-		$this->position = $this->getVector3Obj();
+	protected function decodePayload() : void{
+		$this->position = $this->getVector3();
 		$this->amount = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
-		$this->putVector3Obj($this->position);
+	protected function encodePayload() : void{
+		$this->putVector3($this->position);
 		$this->putVarInt($this->amount);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleSpawnExperienceOrb($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleSpawnExperienceOrb($this);
 	}
 }

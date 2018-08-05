@@ -26,8 +26,8 @@ namespace pocketmine\block;
 
 class Wood2 extends Wood{
 
-	const ACACIA = 0;
-	const DARK_OAK = 1;
+	public const ACACIA = 0;
+	public const DARK_OAK = 1;
 
 	protected $id = self::WOOD2;
 
@@ -36,6 +36,6 @@ class Wood2 extends Wood{
 			0 => "Acacia Wood",
 			1 => "Dark Oak Wood"
 		];
-		return $names[$this->meta & 0x03] ?? "Unknown";
+		return $names[$this->getVariant()] ?? "Unknown";
 	}
 }

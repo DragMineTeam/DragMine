@@ -25,9 +25,8 @@ namespace pocketmine\block;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\item\Tool;
-use pocketmine\level\Level;
 use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\Vector3;
 
 class Farmland extends Transparent{
 
@@ -46,35 +45,62 @@ class Farmland extends Transparent{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_SHOVEL;
+		return BlockToolType::TYPE_SHOVEL;
+	}
+
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		return new AxisAlignedBB(0, 0, 0, 1, 1, 1); //TODO: y max should be 0.9375, but MCPE currently treats them as a full block (https://bugs.mojang.com/browse/MCPE-12109)
+	}
+
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_UP)->isSolid()){
+			$this->level->setBlock($this, BlockFactory::get(Block::DIRT), true);
+		}
 	}
 
 	public function ticksRandomly() : bool{
 		return true;
 	}
 
-	protected function recalculateBoundingBox(){
-		return new AxisAlignedBB(
-			$this->x,
-			$this->y,
-			$this->z,
-			$this->x + 1,
-			$this->y + 1, //TODO: this should be 0.9375, but MCPE currently treats them as a full block (https://bugs.mojang.com/browse/MCPE-12109)
-			$this->z + 1
-		);
+	public function onRandomTick() : void{
+		if(!$this->canHydrate()){
+			if($this->meta > 0){
+				$this->meta--;
+				$this->level->setBlock($this, $this, false, false);
+			}else{
+				$this->level->setBlock($this, BlockFactory::get(Block::DIRT), false, true);
+			}
+		}elseif($this->meta < 7){
+			$this->meta = 7;
+			$this->level->setBlock($this, $this, false, false);
+		}
 	}
 
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_RANDOM){
-			//TODO: hydration
+	protected function canHydrate() : bool{
+		//TODO: check rain
+		$start = $this->add(-4, 0, -4);
+		$end = $this->add(4, 1, 4);
+		for($y = $start->y; $y <= $end->y; ++$y){
+			for($z = $start->z; $z <= $end->z; ++$z){
+				for($x = $start->x; $x <= $end->x; ++$x){
+					$id = $this->level->getBlockIdAt($x, $y, $z);
+					if($id === Block::STILL_WATER or $id === Block::FLOWING_WATER){
+						return true;
+					}
+				}
+			}
 		}
 
 		return false;
 	}
 
-	public function getDrops(Item $item) : array{
+	public function getDropsForCompatibleTool(Item $item) : array{
 		return [
-			ItemFactory::get(Item::DIRT, 0, 1)
+			ItemFactory::get(Item::DIRT)
 		];
+	}
+
+	public function isAffectedBySilkTouch() : bool{
+		return false;
 	}
 }

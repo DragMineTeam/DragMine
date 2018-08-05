@@ -25,15 +25,14 @@ namespace pocketmine\block;
 
 use pocketmine\block\utils\PillarRotationHelper;
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
 class Wood extends Solid{
-	const OAK = 0;
-	const SPRUCE = 1;
-	const BIRCH = 2;
-	const JUNGLE = 3;
+	public const OAK = 0;
+	public const SPRUCE = 1;
+	public const BIRCH = 2;
+	public const JUNGLE = 3;
 
 	protected $id = self::WOOD;
 
@@ -52,10 +51,10 @@ class Wood extends Solid{
 			self::BIRCH => "Birch Wood",
 			self::JUNGLE => "Jungle Wood"
 		];
-		return $names[$this->meta & 0x03];
+		return $names[$this->getVariant()] ?? "Unknown";
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$this->meta = PillarRotationHelper::getMetaFromFace($this->meta, $face);
 		return $this->getLevel()->setBlock($blockReplace, $this, true, true);
 	}
@@ -65,10 +64,18 @@ class Wood extends Solid{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_AXE;
+		return BlockToolType::TYPE_AXE;
 	}
 
 	public function getFuelTime() : int{
 		return 300;
+	}
+
+	public function getFlameEncouragement() : int{
+		return 5;
+	}
+
+	public function getFlammability() : int{
+		return 5;
 	}
 }

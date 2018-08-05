@@ -2,19 +2,19 @@
 
 /*
  *
- *  ____                  __  __ _            
- * |  _ \ _ __ __ _  __ _|  \/  (_)_ __   ___ 
- * | | | | '__/ _` |/ _` | |\/| | | '_ \ / _ \
- * | |_| | | | (_| | (_| | |  | | | | | |  __/
- * |____/|_|  \__,_|\__, |_|  |_|_|_| |_|\___|
- *                  |___/                     
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
+ * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  *
- * @author DragMine Team
+ * @author PocketMine Team
+ * @link http://www.pocketmine.net/
  *
  *
 */
@@ -23,14 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol\types;
 
-use pocketmine\inventory\AnvilInventory;
-use pocketmine\inventory\EnchantInventory;
-use pocketmine\inventory\transaction\action\AnvilAction;
-use pocketmine\inventory\transaction\action\CraftingTakeResultAction;
-use pocketmine\inventory\transaction\action\CraftingTransferMaterialAction;
 use pocketmine\inventory\transaction\action\CreativeInventoryAction;
 use pocketmine\inventory\transaction\action\DropItemAction;
-use pocketmine\inventory\transaction\action\EnchantAction;
 use pocketmine\inventory\transaction\action\InventoryAction;
 use pocketmine\inventory\transaction\action\SlotChangeAction;
 use pocketmine\item\Item;
@@ -38,11 +32,11 @@ use pocketmine\network\mcpe\protocol\InventoryTransactionPacket;
 use pocketmine\Player;
 
 class NetworkInventoryAction{
-	const SOURCE_CONTAINER = 0;
+	public const SOURCE_CONTAINER = 0;
 
-	const SOURCE_WORLD = 2; //drop/pickup item entity
-	const SOURCE_CREATIVE = 3;
-	const SOURCE_TODO = 99999;
+	public const SOURCE_WORLD = 2; //drop/pickup item entity
+	public const SOURCE_CREATIVE = 3;
+	public const SOURCE_TODO = 99999;
 
 	/**
 	 * Fake window IDs for the SOURCE_TODO type (99999)
@@ -53,42 +47,42 @@ class NetworkInventoryAction{
 	 *
 	 * Expect these to change in the future.
 	 */
-	const SOURCE_TYPE_CRAFTING_ADD_INGREDIENT = -2;
-	const SOURCE_TYPE_CRAFTING_REMOVE_INGREDIENT = -3;
-	const SOURCE_TYPE_CRAFTING_RESULT = -4;
-	const SOURCE_TYPE_CRAFTING_USE_INGREDIENT = -5;
+	public const SOURCE_TYPE_CRAFTING_ADD_INGREDIENT = -2;
+	public const SOURCE_TYPE_CRAFTING_REMOVE_INGREDIENT = -3;
+	public const SOURCE_TYPE_CRAFTING_RESULT = -4;
+	public const SOURCE_TYPE_CRAFTING_USE_INGREDIENT = -5;
 
-	const SOURCE_TYPE_ANVIL_INPUT = -10;
-	const SOURCE_TYPE_ANVIL_MATERIAL = -11;
-	const SOURCE_TYPE_ANVIL_RESULT = -12;
-	const SOURCE_TYPE_ANVIL_OUTPUT = -13;
+	public const SOURCE_TYPE_ANVIL_INPUT = -10;
+	public const SOURCE_TYPE_ANVIL_MATERIAL = -11;
+	public const SOURCE_TYPE_ANVIL_RESULT = -12;
+	public const SOURCE_TYPE_ANVIL_OUTPUT = -13;
 
-	const SOURCE_TYPE_ENCHANT_INPUT = -15;
-	const SOURCE_TYPE_ENCHANT_MATERIAL = -16;
-	const SOURCE_TYPE_ENCHANT_OUTPUT = -17;
+	public const SOURCE_TYPE_ENCHANT_INPUT = -15;
+	public const SOURCE_TYPE_ENCHANT_MATERIAL = -16;
+	public const SOURCE_TYPE_ENCHANT_OUTPUT = -17;
 
-	const SOURCE_TYPE_TRADING_INPUT_1 = -20;
-	const SOURCE_TYPE_TRADING_INPUT_2 = -21;
-	const SOURCE_TYPE_TRADING_USE_INPUTS = -22;
-	const SOURCE_TYPE_TRADING_OUTPUT = -23;
+	public const SOURCE_TYPE_TRADING_INPUT_1 = -20;
+	public const SOURCE_TYPE_TRADING_INPUT_2 = -21;
+	public const SOURCE_TYPE_TRADING_USE_INPUTS = -22;
+	public const SOURCE_TYPE_TRADING_OUTPUT = -23;
 
-	const SOURCE_TYPE_BEACON = -24;
+	public const SOURCE_TYPE_BEACON = -24;
 
 	/** Any client-side window dropping its contents when the player closes it */
-	const SOURCE_TYPE_CONTAINER_DROP_CONTENTS = -100;
+	public const SOURCE_TYPE_CONTAINER_DROP_CONTENTS = -100;
 
-	const ACTION_MAGIC_SLOT_CREATIVE_DELETE_ITEM = 0;
-	const ACTION_MAGIC_SLOT_CREATIVE_CREATE_ITEM = 1;
+	public const ACTION_MAGIC_SLOT_CREATIVE_DELETE_ITEM = 0;
+	public const ACTION_MAGIC_SLOT_CREATIVE_CREATE_ITEM = 1;
 
-	const ACTION_MAGIC_SLOT_DROP_ITEM = 0;
-	const ACTION_MAGIC_SLOT_PICKUP_ITEM = 1;
+	public const ACTION_MAGIC_SLOT_DROP_ITEM = 0;
+	public const ACTION_MAGIC_SLOT_PICKUP_ITEM = 1;
 
 	/** @var int */
 	public $sourceType;
 	/** @var int */
 	public $windowId = ContainerIds::NONE;
 	/** @var int */
-	public $unknown = 0;
+	public $sourceFlags = 0;
 	/** @var int */
 	public $inventorySlot;
 	/** @var Item */
@@ -100,7 +94,7 @@ class NetworkInventoryAction{
 	 * @param InventoryTransactionPacket $packet
 	 * @return $this
 	 */
-	public function read(InventoryTransactionPacket $packet){
+	public function read(InventoryTransactionPacket $packet) : NetworkInventoryAction{
 		$this->sourceType = $packet->getUnsignedVarInt();
 
 		switch($this->sourceType){
@@ -108,15 +102,17 @@ class NetworkInventoryAction{
 				$this->windowId = $packet->getVarInt();
 				break;
 			case self::SOURCE_WORLD:
-				$this->unknown = $packet->getUnsignedVarInt();
+				$this->sourceFlags = $packet->getUnsignedVarInt();
 				break;
 			case self::SOURCE_CREATIVE:
 				break;
 			case self::SOURCE_TODO:
 				$this->windowId = $packet->getVarInt();
 				switch($this->windowId){
-					case self::SOURCE_TYPE_CRAFTING_USE_INGREDIENT:
+					/** @noinspection PhpMissingBreakStatementInspection */
 					case self::SOURCE_TYPE_CRAFTING_RESULT:
+						$packet->isFinalCraftingPart = true;
+					case self::SOURCE_TYPE_CRAFTING_USE_INGREDIENT:
 						$packet->isCraftingPart = true;
 						break;
 				}
@@ -133,7 +129,7 @@ class NetworkInventoryAction{
 	/**
 	 * @param InventoryTransactionPacket $packet
 	 */
-	public function write(InventoryTransactionPacket $packet){
+	public function write(InventoryTransactionPacket $packet) : void{
 		$packet->putUnsignedVarInt($this->sourceType);
 
 		switch($this->sourceType){
@@ -141,7 +137,7 @@ class NetworkInventoryAction{
 				$packet->putVarInt($this->windowId);
 				break;
 			case self::SOURCE_WORLD:
-				$packet->putUnsignedVarInt($this->unknown);
+				$packet->putUnsignedVarInt($this->sourceFlags);
 				break;
 			case self::SOURCE_CREATIVE:
 				break;
@@ -160,27 +156,21 @@ class NetworkInventoryAction{
 	 *
 	 * @return InventoryAction|null
 	 */
-	public function createInventoryAction(Player $player){
+	public function createInventoryAction(Player $player) : ?InventoryAction{
 		switch($this->sourceType){
 			case self::SOURCE_CONTAINER:
-				if($this->windowId === ContainerIds::ARMOR){
-					//TODO: HACK!
-					$this->inventorySlot += 36;
-					$this->windowId = ContainerIds::INVENTORY;
-				}
-
 				$window = $player->getWindow($this->windowId);
 				if($window !== null){
 					return new SlotChangeAction($window, $this->inventorySlot, $this->oldItem, $this->newItem);
 				}
 
-				return null;
+				throw new \InvalidStateException("Player " . $player->getName() . " has no open container with window ID $this->windowId");
 			case self::SOURCE_WORLD:
-				if($this->inventorySlot === self::ACTION_MAGIC_SLOT_DROP_ITEM){
-					return new DropItemAction($this->oldItem, $this->newItem);
+				if($this->inventorySlot !== self::ACTION_MAGIC_SLOT_DROP_ITEM){
+					throw new \UnexpectedValueException("Only expecting drop-item world actions from the client!");
 				}
 
-				return null;
+				return new DropItemAction($this->newItem);
 			case self::SOURCE_CREATIVE:
 				switch($this->inventorySlot){
 					case self::ACTION_MAGIC_SLOT_CREATIVE_DELETE_ITEM:
@@ -190,7 +180,7 @@ class NetworkInventoryAction{
 						$type = CreativeInventoryAction::TYPE_CREATE_ITEM;
 						break;
 					default:
-						return null;
+						throw new \UnexpectedValueException("Unexpected creative action type $this->inventorySlot");
 
 				}
 
@@ -203,9 +193,8 @@ class NetworkInventoryAction{
 						$window = $player->getCraftingGrid();
 						return new SlotChangeAction($window, $this->inventorySlot, $this->oldItem, $this->newItem);
 					case self::SOURCE_TYPE_CRAFTING_RESULT:
-						return new CraftingTakeResultAction($this->oldItem, $this->newItem);
 					case self::SOURCE_TYPE_CRAFTING_USE_INGREDIENT:
-						return new CraftingTransferMaterialAction($this->oldItem, $this->newItem, $this->inventorySlot);
+						return null;
 
 					case self::SOURCE_TYPE_CONTAINER_DROP_CONTENTS:
 						//TODO: this type applies to all fake windows, not just crafting
@@ -214,38 +203,15 @@ class NetworkInventoryAction{
 						//DROP_CONTENTS doesn't bother telling us what slot the item is in, so we find it ourselves
 						$inventorySlot = $window->first($this->oldItem, true);
 						if($inventorySlot === -1){
-							return null;
+							throw new \InvalidStateException("Fake container " . get_class($window) . " for " . $player->getName() . " does not contain $this->oldItem");
 						}
 						return new SlotChangeAction($window, $inventorySlot, $this->oldItem, $this->newItem);
-
-					case self::SOURCE_TYPE_ANVIL_INPUT:
-						$window = $player->getWindowByType(AnvilInventory::class);
-						return new AnvilAction($window, 0, $this->oldItem, $this->newItem);
-					case self::SOURCE_TYPE_ANVIL_MATERIAL:
-						$window = $player->getWindowByType(AnvilInventory::class);
-						return new AnvilAction($window, 1, $this->oldItem, $this->newItem);
-					case self::SOURCE_TYPE_ANVIL_RESULT:
-						$window = $player->getWindowByType(AnvilInventory::class);
-						$window->setItem(1, Item::get(0)); //TODO: HACK!
-						$window->isMoving = true;
-						return new AnvilAction($window, 2, $this->oldItem, $this->newItem);
-
-					case self::SOURCE_TYPE_ENCHANT_INPUT:
-						$window = $player->getWindowByType(EnchantInventory::class);
-						return new EnchantAction($window, 0, $this->oldItem, $this->newItem);
-					case self::SOURCE_TYPE_ENCHANT_MATERIAL:
-						$window = $player->getWindowByType(EnchantInventory::class);
-						return new EnchantAction($window, 1, $this->oldItem, $this->newItem);
-					case self::SOURCE_TYPE_ENCHANT_OUTPUT:
-						$window = $player->getWindowByType(EnchantInventory::class);
-						return new EnchantAction($window, $this->inventorySlot, $this->oldItem, $this->newItem);
 				}
 
 				//TODO: more stuff
-				return null;
+				throw new \UnexpectedValueException("Player " . $player->getName() . " has no open container with window ID $this->windowId");
+			default:
+				throw new \UnexpectedValueException("Unknown inventory source type $this->sourceType");
 		}
-
-		return null;
 	}
-
 }

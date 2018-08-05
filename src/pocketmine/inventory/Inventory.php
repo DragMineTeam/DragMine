@@ -30,7 +30,7 @@ use pocketmine\item\Item;
 use pocketmine\Player;
 
 interface Inventory{
-	const MAX_STACK = 64;
+	public const MAX_STACK = 64;
 
 	/**
 	 * @return int
@@ -82,7 +82,7 @@ interface Inventory{
 	 *
 	 * Returns the Items that did not fit.
 	 *
-	 * @param Item[] ...$slots
+	 * @param Item ...$slots
 	 *
 	 * @return Item[]
 	 */
@@ -101,16 +101,18 @@ interface Inventory{
 	 * Removes the given Item from the inventory.
 	 * It will return the Items that couldn't be removed.
 	 *
-	 * @param Item[] ...$slots
+	 * @param Item ...$slots
 	 *
 	 * @return Item[]
 	 */
 	public function removeItem(Item ...$slots) : array;
 
 	/**
+	 * @param bool $includeEmpty
+	 *
 	 * @return Item[]
 	 */
-	public function getContents() : array;
+	public function getContents(bool $includeEmpty = false) : array;
 
 	/**
 	 * @param Item[] $items
@@ -170,6 +172,15 @@ interface Inventory{
 	public function firstEmpty() : int;
 
 	/**
+	 * Returns whether the given slot is empty.
+	 *
+	 * @param int $index
+	 *
+	 * @return bool
+	 */
+	public function isSlotEmpty(int $index) : bool;
+
+	/**
 	 * Will remove all the Items that has the same id and metadata (if not null)
 	 *
 	 * @param Item $item
@@ -188,8 +199,10 @@ interface Inventory{
 
 	/**
 	 * Clears all the slots
+	 *
+	 * @param bool $send
 	 */
-	public function clearAll() : void;
+	public function clearAll(bool $send = true) : void;
 
 	/**
 	 * Gets all the Players viewing the inventory
@@ -198,11 +211,6 @@ interface Inventory{
 	 * @return Player[]
 	 */
 	public function getViewers() : array;
-
-	/**
-	 * @return InventoryHolder
-	 */
-	public function getHolder();
 
 	/**
 	 * @param Player $who
@@ -231,4 +239,22 @@ interface Inventory{
 	 * @param bool $send
 	 */
 	public function onSlotChange(int $index, Item $before, bool $send) : void;
+
+	/**
+	 * Returns whether the specified slot exists in the inventory.
+	 *
+	 * @param int $slot
+	 * @return bool
+	 */
+	public function slotExists(int $slot) : bool;
+
+	/**
+	 * @return null|InventoryEventProcessor
+	 */
+	public function getEventProcessor() : ?InventoryEventProcessor;
+
+	/**
+	 * @param null|InventoryEventProcessor $eventProcessor
+	 */
+	public function setEventProcessor(?InventoryEventProcessor $eventProcessor) : void;
 }

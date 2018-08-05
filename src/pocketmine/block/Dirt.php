@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
+use pocketmine\item\Hoe;
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
 use pocketmine\Player;
 
 class Dirt extends Solid{
@@ -40,7 +40,7 @@ class Dirt extends Solid{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_SHOVEL;
+		return BlockToolType::TYPE_SHOVEL;
 	}
 
 	public function getName() : string{
@@ -51,8 +51,8 @@ class Dirt extends Solid{
 	}
 
 	public function onActivate(Item $item, Player $player = null) : bool{
-		if($item->isHoe()){
-			$item->useOn($this);
+		if($item instanceof Hoe){
+			$item->applyDamage(1);
 			if($this->meta === 1){
 				$this->getLevel()->setBlock($this, BlockFactory::get(Block::DIRT), true);
 			}else{

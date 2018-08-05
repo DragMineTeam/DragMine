@@ -23,9 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\level\Level;
-use pocketmine\math\Vector3;
-
 class WallBanner extends StandingBanner{
 
 	protected $id = self::WALL_BANNER;
@@ -34,21 +31,9 @@ class WallBanner extends StandingBanner{
 		return "Wall Banner";
 	}
 
-	public function onUpdate(int $type){
-		$faces = [
-			Vector3::SIDE_NORTH => 3,
-			Vector3::SIDE_SOUTH => 2,
-			Vector3::SIDE_WEST => 5,
-			Vector3::SIDE_EAST => 4
-		];
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if(isset($faces[$this->meta])){
-				if($this->getSide($faces[$this->meta])->getId() === self::AIR){
-					$this->getLevel()->useBreakOn($this);
-				}
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
+	public function onNearbyBlockChange() : void{
+		if($this->getSide($this->meta ^ 0x01)->getId() === self::AIR){
+			$this->getLevel()->useBreakOn($this);
 		}
-		return false;
 	}
 }

@@ -27,13 +27,12 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\entity\Entity;
+use pocketmine\item\enchantment\Enchantment;
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\item\Tool;
-use pocketmine\level\Level;
-use pocketmine\level\MovingObjectPosition;
 use pocketmine\level\Position;
 use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\RayTraceResult;
 use pocketmine\math\Vector3;
 use pocketmine\metadata\Metadatable;
 use pocketmine\metadata\MetadataValue;
@@ -67,7 +66,11 @@ class Block extends Position implements BlockIds, Metadatable{
 	protected $itemId;
 
 	/** @var AxisAlignedBB */
-	public $boundingBox = null;
+	protected $boundingBox = null;
+
+
+	/** @var AxisAlignedBB[]|null */
+	protected $collisionBoxes = null;
 
 	/**
 	 * @param int         $id     The block type's ID, 0-255
@@ -116,7 +119,7 @@ class Block extends Position implements BlockIds, Metadatable{
 	/**
 	 * @param int $meta
 	 */
-	final public function setDamage(int $meta){
+	final public function setDamage(int $meta) : void{
 		if($meta < 0 or $meta > 0xf){
 			throw new \InvalidArgumentException("Block damage values must be 0-15, not $meta");
 		}
@@ -160,6 +163,10 @@ class Block extends Position implements BlockIds, Metadatable{
 		return false;
 	}
 
+	public function canBePlacedAt(Block $blockReplace, Vector3 $clickVector, int $face, bool $isClickedBlock) : bool{
+		return $blockReplace->canBeReplaced();
+	}
+
 	/**
 	 * Places the Block, using block space and block target, and side. Returns if the block has been placed.
 	 *
@@ -167,12 +174,12 @@ class Block extends Position implements BlockIds, Metadatable{
 	 * @param Block       $blockReplace
 	 * @param Block       $blockClicked
 	 * @param int         $face
-	 * @param Vector3     $facePos
+	 * @param Vector3     $clickVector
 	 * @param Player|null $player
 	 *
 	 * @return bool
 	 */
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		return $this->getLevel()->setBlock($this, $this, true, true);
 	}
 
@@ -187,8 +194,49 @@ class Block extends Position implements BlockIds, Metadatable{
 		return true;
 	}
 
-	public function canBeBrokenWith(Item $item) : bool{
-		return $this->getHardness() !== -1;
+	/**
+	 * @return int
+	 */
+	public function getToolType() : int{
+		return BlockToolType::TYPE_NONE;
+	}
+
+	/**
+	 * Returns the level of tool required to harvest this block (for normal blocks). When the tool type matches the
+	 * block's required tool type, the tool must have a harvest level greater than or equal to this value to be able to
+	 * successfully harvest the block.
+	 *
+	 * If the block requires a specific minimum tier of tiered tool, the minimum tier required should be returned.
+	 * Otherwise, 1 should be returned if a tool is required, 0 if not.
+	 *
+	 * @see Item::getBlockToolHarvestLevel()
+	 *
+	 * @return int
+	 */
+	public function getToolHarvestLevel() : int{
+		return 0;
+	}
+
+	/**
+	 * Returns whether the specified item is the proper tool to use for breaking this block. This checks tool type and
+	 * harvest level requirement.
+	 *
+	 * In most cases this is also used to determine whether block drops should be created or not, except in some
+	 * special cases such as vines.
+	 *
+	 * @param Item $tool
+	 *
+	 * @return bool
+	 */
+	public function isCompatibleWithTool(Item $tool) : bool{
+		if($this->getHardness() < 0){
+			return false;
+		}
+
+		$toolType = $this->getToolType();
+		$harvestLevel = $this->getToolHarvestLevel();
+		return $toolType === BlockToolType::TYPE_NONE or $harvestLevel === 0 or (
+			($toolType & $tool->getBlockToolType()) !== 0 and $tool->getBlockToolHarvestLevel() >= $harvestLevel);
 	}
 
 	/**
@@ -212,44 +260,29 @@ class Block extends Position implements BlockIds, Metadatable{
 	 * @return float
 	 */
 	public function getBreakTime(Item $item) : float{
-		$base = $this->getHardness() * 1.5;
-		if($this->canBeBrokenWith($item)){
-			if($this->getToolType() === Tool::TYPE_SHEARS and $item->isShears()){
-				$base /= 15;
-			}elseif(
-				($this->getToolType() === Tool::TYPE_PICKAXE and ($tier = $item->isPickaxe()) !== false) or
-				($this->getToolType() === Tool::TYPE_AXE and ($tier = $item->isAxe()) !== false) or
-				($this->getToolType() === Tool::TYPE_SHOVEL and ($tier = $item->isShovel()) !== false)
-			){
-				switch($tier){
-					case Tool::TIER_WOODEN:
-						$base /= 2;
-						break;
-					case Tool::TIER_STONE:
-						$base /= 4;
-						break;
-					case Tool::TIER_IRON:
-						$base /= 6;
-						break;
-					case Tool::TIER_DIAMOND:
-						$base /= 8;
-						break;
-					case Tool::TIER_GOLD:
-						$base /= 12;
-						break;
-				}
-			}
+		$base = $this->getHardness();
+		if($this->isCompatibleWithTool($item)){
+			$base *= 1.5;
 		}else{
-			$base *= 3.33;
+			$base *= 5;
 		}
 
-		if($item->isSword()){
-			$base *= 0.5;
+		$efficiency = $item->getMiningEfficiency($this);
+		if($efficiency <= 0){
+			throw new \RuntimeException("Item efficiency is invalid");
 		}
+
+		$base /= $efficiency;
 
 		return $base;
 	}
 
+	/**
+	 * Called when this block or a block immediately adjacent to it changes state.
+	 */
+	public function onNearbyBlockChange() : void{
+
+	}
 
 	/**
 	 * Returns whether random block updates will be done on this block.
@@ -261,14 +294,18 @@ class Block extends Position implements BlockIds, Metadatable{
 	}
 
 	/**
-	 * Fires a block update on the Block
-	 *
-	 * @param int $type
-	 *
-	 * @return bool|int
+	 * Called when this block is randomly updated due to chunk ticking.
+	 * WARNING: This will not be called if ticksRandomly() does not return true!
 	 */
-	public function onUpdate(int $type){
-		return false;
+	public function onRandomTick() : void{
+
+	}
+
+	/**
+	 * Called when this block is updated by the delayed blockupdate scheduler in the level.
+	 */
+	public function onScheduledUpdate() : void{
+
 	}
 
 	/**
@@ -292,26 +329,11 @@ class Block extends Position implements BlockIds, Metadatable{
 	}
 
 	/**
-	 * @deprecated
-	 * @return float
-	 */
-	public function getResistance() : float{
-		return $this->getBlastResistance();
-	}
-
-	/**
 	 * Returns the block's resistance to explosions. Usually 5x hardness.
 	 * @return float
 	 */
 	public function getBlastResistance() : float{
 		return $this->getHardness() * 5;
-	}
-
-	/**
-	 * @return int
-	 */
-	public function getToolType() : int{
-		return Tool::TYPE_NONE;
 	}
 
 	/**
@@ -387,7 +409,7 @@ class Block extends Position implements BlockIds, Metadatable{
 	}
 
 
-	public function addVelocityToEntity(Entity $entity, Vector3 $vector){
+	public function addVelocityToEntity(Entity $entity, Vector3 $vector) : void{
 
 	}
 
@@ -396,7 +418,7 @@ class Block extends Position implements BlockIds, Metadatable{
 	 *
 	 * @param Position $v
 	 */
-	final public function position(Position $v){
+	final public function position(Position $v) : void{
 		$this->x = (int) $v->x;
 		$this->y = (int) $v->y;
 		$this->z = (int) $v->z;
@@ -412,9 +434,83 @@ class Block extends Position implements BlockIds, Metadatable{
 	 * @return Item[]
 	 */
 	public function getDrops(Item $item) : array{
+		if($this->isCompatibleWithTool($item)){
+			if($this->isAffectedBySilkTouch() and $item->hasEnchantment(Enchantment::SILK_TOUCH)){
+				return $this->getSilkTouchDrops($item);
+			}
+
+			return $this->getDropsForCompatibleTool($item);
+		}
+
+		return [];
+	}
+
+	/**
+	 * Returns an array of Items to be dropped when the block is broken using the correct tool type.
+	 *
+	 * @param Item $item
+	 *
+	 * @return Item[]
+	 */
+	public function getDropsForCompatibleTool(Item $item) : array{
 		return [
-			ItemFactory::get($this->getItemId(), $this->getVariant(), 1)
+			ItemFactory::get($this->getItemId(), $this->getVariant())
 		];
+	}
+
+	/**
+	 * Returns an array of Items to be dropped when the block is broken using a compatible Silk Touch-enchanted tool.
+	 *
+	 * @param Item $item
+	 *
+	 * @return Item[]
+	 */
+	public function getSilkTouchDrops(Item $item) : array{
+		return [
+			ItemFactory::get($this->getItemId(), $this->getVariant())
+		];
+	}
+
+	/**
+	 * Returns how much XP will be dropped by breaking this block with the given item.
+	 *
+	 * @param Item $item
+	 *
+	 * @return int
+	 */
+	public function getXpDropForTool(Item $item) : int{
+		if($item->hasEnchantment(Enchantment::SILK_TOUCH) or !$this->isCompatibleWithTool($item)){
+			return 0;
+		}
+
+		return $this->getXpDropAmount();
+	}
+
+	/**
+	 * Returns how much XP this block will drop when broken with an appropriate tool.
+	 *
+	 * @return int
+	 */
+	protected function getXpDropAmount() : int{
+		return 0;
+	}
+
+	/**
+	 * Returns whether Silk Touch enchanted tools will cause this block to drop as itself. Since most blocks drop
+	 * themselves anyway, this is implicitly true.
+	 *
+	 * @return bool
+	 */
+	public function isAffectedBySilkTouch() : bool{
+		return true;
+	}
+
+	/**
+	 * Returns the item that players will equip when middle-clicking on this block.
+	 * @return Item
+	 */
+	public function getPickedItem() : Item{
+		return ItemFactory::get($this->getItemId(), $this->getVariant());
 	}
 
 	/**
@@ -426,19 +522,102 @@ class Block extends Position implements BlockIds, Metadatable{
 	}
 
 	/**
-	 * Returns the Block on the side $side, works like Vector3::side()
+	 * Returns the chance that the block will catch fire from nearby fire sources. Higher values lead to faster catching
+	 * fire.
+	 *
+	 * @return int
+	 */
+	public function getFlameEncouragement() : int{
+		return 0;
+	}
+
+	/**
+	 * Returns the base flammability of this block. Higher values lead to the block burning away more quickly.
+	 *
+	 * @return int
+	 */
+	public function getFlammability() : int{
+		return 0;
+	}
+
+	/**
+	 * Returns whether fire lit on this block will burn indefinitely.
+	 *
+	 * @return bool
+	 */
+	public function burnsForever() : bool{
+		return false;
+	}
+
+	/**
+	 * Returns whether this block can catch fire.
+	 *
+	 * @return bool
+	 */
+	public function isFlammable() : bool{
+		return $this->getFlammability() > 0;
+	}
+
+	/**
+	 * Called when this block is burned away by being on fire.
+	 */
+	public function onIncinerate() : void{
+
+	}
+
+	/**
+	 * Returns the Block on the side $side, works like Vector3::getSide()
 	 *
 	 * @param int $side
 	 * @param int $step
 	 *
 	 * @return Block
 	 */
-	public function getSide($side, $step = 1){
+	public function getSide(int $side, int $step = 1){
 		if($this->isValid()){
 			return $this->getLevel()->getBlock(Vector3::getSide($side, $step));
 		}
 
 		return BlockFactory::get(Block::AIR, 0, Position::fromObject(Vector3::getSide($side, $step)));
+	}
+
+	/**
+	 * Returns the 4 blocks on the horizontal axes around the block (north, south, east, west)
+	 *
+	 * @return Block[]
+	 */
+	public function getHorizontalSides() : array{
+		return [
+			$this->getSide(Vector3::SIDE_NORTH),
+			$this->getSide(Vector3::SIDE_SOUTH),
+			$this->getSide(Vector3::SIDE_WEST),
+			$this->getSide(Vector3::SIDE_EAST)
+		];
+	}
+
+	/**
+	 * Returns the six blocks around this block.
+	 *
+	 * @return Block[]
+	 */
+	public function getAllSides() : array{
+		return array_merge(
+			[
+				$this->getSide(Vector3::SIDE_DOWN),
+				$this->getSide(Vector3::SIDE_UP)
+			],
+			$this->getHorizontalSides()
+		);
+	}
+
+	/**
+	 * Returns a list of blocks that this block is part of. In most cases, only contains the block itself, but in cases
+	 * such as double plants, beds and doors, will contain both halves.
+	 *
+	 * @return Block[]
+	 */
+	public function getAffectedBlocks() : array{
+		return [$this];
 	}
 
 	/**
@@ -456,24 +635,56 @@ class Block extends Position implements BlockIds, Metadatable{
 	 * @return bool
 	 */
 	public function collidesWithBB(AxisAlignedBB $bb) : bool{
-		$bb2 = $this->getBoundingBox();
+		foreach($this->getCollisionBoxes() as $bb2){
+			if($bb->intersectsWith($bb2)){
+				return true;
+			}
+		}
 
-		return $bb2 !== null and $bb->intersectsWith($bb2);
+		return false;
 	}
 
 	/**
 	 * @param Entity $entity
 	 */
-	public function onEntityCollide(Entity $entity){
+	public function onEntityCollide(Entity $entity) : void{
 
+	}
+
+	/**
+	 * @return AxisAlignedBB[]
+	 */
+	public function getCollisionBoxes() : array{
+		if($this->collisionBoxes === null){
+			$this->collisionBoxes = $this->recalculateCollisionBoxes();
+			foreach($this->collisionBoxes as $bb){
+				$bb->offset($this->x, $this->y, $this->z);
+			}
+		}
+
+		return $this->collisionBoxes;
+	}
+
+	/**
+	 * @return AxisAlignedBB[]
+	 */
+	protected function recalculateCollisionBoxes() : array{
+		if($bb = $this->recalculateBoundingBox()){
+			return [$bb];
+		}
+
+		return [];
 	}
 
 	/**
 	 * @return AxisAlignedBB|null
 	 */
-	public function getBoundingBox(){
+	public function getBoundingBox() : ?AxisAlignedBB{
 		if($this->boundingBox === null){
 			$this->boundingBox = $this->recalculateBoundingBox();
+			if($this->boundingBox !== null){
+				$this->boundingBox->offset($this->x, $this->y, $this->z);
+			}
 		}
 		return $this->boundingBox;
 	}
@@ -481,130 +692,77 @@ class Block extends Position implements BlockIds, Metadatable{
 	/**
 	 * @return AxisAlignedBB|null
 	 */
-	protected function recalculateBoundingBox(){
-		return new AxisAlignedBB(
-			$this->x,
-			$this->y,
-			$this->z,
-			$this->x + 1,
-			$this->y + 1,
-			$this->z + 1
-		);
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		return new AxisAlignedBB(0, 0, 0, 1, 1, 1);
+	}
+
+	/**
+	 * Clears any cached precomputed objects, such as bounding boxes. This is called on block neighbour update and when
+	 * the block is set into the world to remove any outdated precomputed things such as AABBs and force recalculation.
+	 */
+	public function clearCaches() : void{
+		$this->boundingBox = null;
+		$this->collisionBoxes = null;
 	}
 
 	/**
 	 * @param Vector3 $pos1
 	 * @param Vector3 $pos2
 	 *
-	 * @return MovingObjectPosition|null
+	 * @return RayTraceResult|null
 	 */
-	public function calculateIntercept(Vector3 $pos1, Vector3 $pos2){
-		$bb = $this->getBoundingBox();
-		if($bb === null){
+	public function calculateIntercept(Vector3 $pos1, Vector3 $pos2) : ?RayTraceResult{
+		$bbs = $this->getCollisionBoxes();
+		if(empty($bbs)){
 			return null;
 		}
 
-		$v1 = $pos1->getIntermediateWithXValue($pos2, $bb->minX);
-		$v2 = $pos1->getIntermediateWithXValue($pos2, $bb->maxX);
-		$v3 = $pos1->getIntermediateWithYValue($pos2, $bb->minY);
-		$v4 = $pos1->getIntermediateWithYValue($pos2, $bb->maxY);
-		$v5 = $pos1->getIntermediateWithZValue($pos2, $bb->minZ);
-		$v6 = $pos1->getIntermediateWithZValue($pos2, $bb->maxZ);
+		/** @var RayTraceResult|null $currentHit */
+		$currentHit = null;
+		/** @var int|float $currentDistance */
+		$currentDistance = PHP_INT_MAX;
 
-		if($v1 !== null and !$bb->isVectorInYZ($v1)){
-			$v1 = null;
+		foreach($bbs as $bb){
+			$nextHit = $bb->calculateIntercept($pos1, $pos2);
+			if($nextHit === null){
+				continue;
+			}
+
+			$nextDistance = $nextHit->hitVector->distanceSquared($pos1);
+			if($nextDistance < $currentDistance){
+				$currentHit = $nextHit;
+				$currentDistance = $nextDistance;
+			}
 		}
 
-		if($v2 !== null and !$bb->isVectorInYZ($v2)){
-			$v2 = null;
-		}
-
-		if($v3 !== null and !$bb->isVectorInXZ($v3)){
-			$v3 = null;
-		}
-
-		if($v4 !== null and !$bb->isVectorInXZ($v4)){
-			$v4 = null;
-		}
-
-		if($v5 !== null and !$bb->isVectorInXY($v5)){
-			$v5 = null;
-		}
-
-		if($v6 !== null and !$bb->isVectorInXY($v6)){
-			$v6 = null;
-		}
-
-		$vector = $v1;
-
-		if($v2 !== null and ($vector === null or $pos1->distanceSquared($v2) < $pos1->distanceSquared($vector))){
-			$vector = $v2;
-		}
-
-		if($v3 !== null and ($vector === null or $pos1->distanceSquared($v3) < $pos1->distanceSquared($vector))){
-			$vector = $v3;
-		}
-
-		if($v4 !== null and ($vector === null or $pos1->distanceSquared($v4) < $pos1->distanceSquared($vector))){
-			$vector = $v4;
-		}
-
-		if($v5 !== null and ($vector === null or $pos1->distanceSquared($v5) < $pos1->distanceSquared($vector))){
-			$vector = $v5;
-		}
-
-		if($v6 !== null and ($vector === null or $pos1->distanceSquared($v6) < $pos1->distanceSquared($vector))){
-			$vector = $v6;
-		}
-
-		if($vector === null){
-			return null;
-		}
-
-		$f = -1;
-
-		if($vector === $v1){
-			$f = 4;
-		}elseif($vector === $v2){
-			$f = 5;
-		}elseif($vector === $v3){
-			$f = 0;
-		}elseif($vector === $v4){
-			$f = 1;
-		}elseif($vector === $v5){
-			$f = 2;
-		}elseif($vector === $v6){
-			$f = 3;
-		}
-
-		return MovingObjectPosition::fromBlock($this->x, $this->y, $this->z, $f, $vector->add($this->x, $this->y, $this->z));
+		return $currentHit;
 	}
 
 	public function setMetadata(string $metadataKey, MetadataValue $newMetadataValue){
-		if($this->getLevel() instanceof Level){
-			$this->getLevel()->getBlockMetadata()->setMetadata($this, $metadataKey, $newMetadataValue);
+		if($this->isValid()){
+			$this->level->getBlockMetadata()->setMetadata($this, $metadataKey, $newMetadataValue);
 		}
 	}
 
 	public function getMetadata(string $metadataKey){
-		if($this->getLevel() instanceof Level){
-			return $this->getLevel()->getBlockMetadata()->getMetadata($this, $metadataKey);
+		if($this->isValid()){
+			return $this->level->getBlockMetadata()->getMetadata($this, $metadataKey);
 		}
 
 		return null;
 	}
 
 	public function hasMetadata(string $metadataKey) : bool{
-		if($this->getLevel() instanceof Level){
-			return $this->getLevel()->getBlockMetadata()->hasMetadata($this, $metadataKey);
+		if($this->isValid()){
+			return $this->level->getBlockMetadata()->hasMetadata($this, $metadataKey);
 		}
 
 		return false;
 	}
 
 	public function removeMetadata(string $metadataKey, Plugin $owningPlugin){
-		if($this->getLevel() instanceof Level){
-			$this->getLevel()->getBlockMetadata()->removeMetadata($this, $metadataKey, $owningPlugin);
+		if($this->isValid()){
+			$this->level->getBlockMetadata()->removeMetadata($this, $metadataKey, $owningPlugin);
 		}
 	}
 }

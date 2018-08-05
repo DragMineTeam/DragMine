@@ -25,18 +25,18 @@ namespace pocketmine\entity;
 
 class Attribute{
 
-	const ABSORPTION = 0;
-	const SATURATION = 1;
-	const EXHAUSTION = 2;
-	const KNOCKBACK_RESISTANCE = 3;
-	const HEALTH = 4;
-	const MOVEMENT_SPEED = 5;
-	const FOLLOW_RANGE = 6;
-	const HUNGER = 7;
-	const FOOD = 7;
-	const ATTACK_DAMAGE = 8;
-	const EXPERIENCE_LEVEL = 9;
-	const EXPERIENCE = 10;
+	public const ABSORPTION = 0;
+	public const SATURATION = 1;
+	public const EXHAUSTION = 2;
+	public const KNOCKBACK_RESISTANCE = 3;
+	public const HEALTH = 4;
+	public const MOVEMENT_SPEED = 5;
+	public const FOLLOW_RANGE = 6;
+	public const HUNGER = 7;
+	public const FOOD = 7;
+	public const ATTACK_DAMAGE = 8;
+	public const EXPERIENCE_LEVEL = 9;
+	public const EXPERIENCE = 10;
 
 	private $id;
 	protected $minValue;
@@ -51,7 +51,7 @@ class Attribute{
 	/** @var Attribute[] */
 	protected static $attributes = [];
 
-	public static function init(){
+	public static function init() : void{
 		self::addAttribute(self::ABSORPTION, "minecraft:absorption", 0.00, 340282346638528859811704183484516925440.00, 0.00);
 		self::addAttribute(self::SATURATION, "minecraft:player.saturation", 0.00, 20.00, 20.00);
 		self::addAttribute(self::EXHAUSTION, "minecraft:player.exhaustion", 0.00, 5.00, 0.0);
@@ -92,7 +92,7 @@ class Attribute{
 	 *
 	 * @return Attribute|null
 	 */
-	public static function getAttribute(int $id){
+	public static function getAttribute(int $id) : ?Attribute{
 		return isset(self::$attributes[$id]) ? clone self::$attributes[$id] : null;
 	}
 
@@ -101,7 +101,7 @@ class Attribute{
 	 *
 	 * @return Attribute|null
 	 */
-	public static function getAttributeByName(string $name){
+	public static function getAttributeByName(string $name) : ?Attribute{
 		foreach(self::$attributes as $a){
 			if($a->getName() === $name){
 				return clone $a;
@@ -170,7 +170,7 @@ class Attribute{
 		return $this;
 	}
 
-	public function resetToDefault(){
+	public function resetToDefault() : void{
 		$this->setValue($this->getDefaultValue());
 	}
 
@@ -219,7 +219,7 @@ class Attribute{
 		return $this->shouldSend and $this->desynchronized;
 	}
 
-	public function markSynchronized(bool $synced = true){
+	public function markSynchronized(bool $synced = true) : void{
 		$this->desynchronized = !$synced;
 	}
 }

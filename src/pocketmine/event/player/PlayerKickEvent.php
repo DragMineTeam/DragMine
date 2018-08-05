@@ -24,15 +24,13 @@ declare(strict_types=1);
 namespace pocketmine\event\player;
 
 use pocketmine\event\Cancellable;
-use pocketmine\event\TextContainer;
+use pocketmine\lang\TextContainer;
 use pocketmine\Player;
 
 /**
  * Called when a player leaves the server
  */
 class PlayerKickEvent extends PlayerEvent implements Cancellable{
-	public static $handlerList = null;
-
 	/** @var TextContainer|string */
 	protected $quitMessage;
 
@@ -52,6 +50,13 @@ class PlayerKickEvent extends PlayerEvent implements Cancellable{
 		$this->reason = $reason;
 	}
 
+	/**
+	 * @param string $reason
+	 */
+	public function setReason(string $reason) : void{
+		$this->reason = $reason;
+	}
+
 	public function getReason() : string{
 		return $this->reason;
 	}
@@ -59,7 +64,7 @@ class PlayerKickEvent extends PlayerEvent implements Cancellable{
 	/**
 	 * @param TextContainer|string $quitMessage
 	 */
-	public function setQuitMessage($quitMessage){
+	public function setQuitMessage($quitMessage) : void{
 		$this->quitMessage = $quitMessage;
 	}
 
@@ -69,5 +74,4 @@ class PlayerKickEvent extends PlayerEvent implements Cancellable{
 	public function getQuitMessage(){
 		return $this->quitMessage;
 	}
-
 }

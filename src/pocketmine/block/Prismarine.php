@@ -23,14 +23,13 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\item\Item;
-use pocketmine\item\Tool;
+use pocketmine\item\TieredTool;
 
 class Prismarine extends Solid{
 
-	const NORMAL = 0;
-	const DARK = 1;
-	const BRICKS = 2;
+	public const NORMAL = 0;
+	public const DARK = 1;
+	public const BRICKS = 2;
 
 	protected $id = self::PRISMARINE;
 
@@ -48,22 +47,18 @@ class Prismarine extends Solid{
 			self::DARK => "Dark Prismarine",
 			self::BRICKS => "Prismarine Bricks"
 		];
-		return $names[$this->meta & 0x03] ?? "Unknown";
+		return $names[$this->getVariant()] ?? "Unknown";
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_PICKAXE;
+		return BlockToolType::TYPE_PICKAXE;
+	}
+
+	public function getToolHarvestLevel() : int{
+		return TieredTool::TIER_WOODEN;
 	}
 
 	public function getVariantBitmask() : int{
 		return 0x03;
-	}
-
-	public function getDrops(Item $item) : array{
-		if($item->isPickaxe() >= Tool::TIER_WOODEN){
-			return parent::getDrops($item);
-		}
-
-		return [];
 	}
 }

@@ -27,11 +27,12 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\item\Item;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
+use pocketmine\network\mcpe\protocol\types\EntityLink;
 use pocketmine\utils\UUID;
 
 class AddPlayerPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::ADD_PLAYER_PACKET;
+	public const NETWORK_ID = ProtocolInfo::ADD_PLAYER_PACKET;
 
 	/** @var UUID */
 	public $uuid;
@@ -53,10 +54,10 @@ class AddPlayerPacket extends DataPacket{
 	public $motion;
 	/** @var float */
 	public $pitch = 0.0;
-	/** @var float|null */
-	public $headYaw = null; //TODO
 	/** @var float */
 	public $yaw = 0.0;
+	/** @var float|null */
+	public $headYaw = null; //TODO
 	/** @var Item */
 	public $item;
 	/** @var array */
@@ -71,9 +72,10 @@ class AddPlayerPacket extends DataPacket{
 
 	public $long1 = 0;
 
+	/** @var EntityLink[] */
 	public $links = [];
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->uuid = $this->getUUID();
 		$this->username = $this->getString();
 		$this->thirdPartyName = $this->getString();
@@ -81,13 +83,14 @@ class AddPlayerPacket extends DataPacket{
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->platformChatId = $this->getString();
-		$this->position = $this->getVector3Obj();
-		$this->motion = $this->getVector3Obj();
+		$this->position = $this->getVector3();
+		$this->motion = $this->getVector3();
 		$this->pitch = $this->getLFloat();
-		$this->headYaw = $this->getLFloat();
 		$this->yaw = $this->getLFloat();
+		$this->headYaw = $this->getLFloat();
 		$this->item = $this->getSlot();
 		$this->metadata = $this->getEntityMetadata();
+
 		$this->uvarint1 = $this->getUnsignedVarInt();
 		$this->uvarint2 = $this->getUnsignedVarInt();
 		$this->uvarint3 = $this->getUnsignedVarInt();
@@ -102,7 +105,7 @@ class AddPlayerPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putUUID($this->uuid);
 		$this->putString($this->username);
 		$this->putString($this->thirdPartyName);
@@ -110,11 +113,11 @@ class AddPlayerPacket extends DataPacket{
 		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putString($this->platformChatId);
-		$this->putVector3Obj($this->position);
-		$this->putVector3ObjNullable($this->motion);
+		$this->putVector3($this->position);
+		$this->putVector3Nullable($this->motion);
 		$this->putLFloat($this->pitch);
-		$this->putLFloat($this->headYaw ?? $this->yaw);
 		$this->putLFloat($this->yaw);
+		$this->putLFloat($this->headYaw ?? $this->yaw);
 		$this->putSlot($this->item);
 		$this->putEntityMetadata($this->metadata);
 
@@ -132,8 +135,7 @@ class AddPlayerPacket extends DataPacket{
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleAddPlayer($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleAddPlayer($this);
 	}
-
 }

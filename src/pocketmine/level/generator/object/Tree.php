@@ -32,9 +32,9 @@ use pocketmine\utils\Random;
 abstract class Tree{
 	public $overridable = [
 		Block::AIR => true,
-		6 => true,
-		17 => true,
-		18 => true,
+		Block::SAPLING => true,
+		Block::LOG => true,
+		Block::LEAVES => true,
 		Block::SNOW_LAYER => true,
 		Block::LOG2 => true,
 		Block::LEAVES2 => true
@@ -45,7 +45,7 @@ abstract class Tree{
 	public $leafBlock = Block::LEAVES;
 	public $treeHeight = 7;
 
-	public static function growTree(ChunkManager $level, int $x, int $y, int $z, Random $random, int $type = 0){
+	public static function growTree(ChunkManager $level, int $x, int $y, int $z, Random $random, int $type = Sapling::OAK) : void{
 		switch($type){
 			case Sapling::SPRUCE:
 				$tree = new SpruceTree();
@@ -60,7 +60,9 @@ abstract class Tree{
 			case Sapling::JUNGLE:
 				$tree = new JungleTree();
 				break;
-			case Sapling::OAK:
+			case Sapling::ACACIA:
+			case Sapling::DARK_OAK:
+				return; //TODO
 			default:
 				$tree = new OakTree();
 				/*if($random->nextRange(0, 9) === 0){
@@ -94,8 +96,7 @@ abstract class Tree{
 		return true;
 	}
 
-	public function placeObject(ChunkManager $level, int $x, int $y, int $z, Random $random){
-
+	public function placeObject(ChunkManager $level, int $x, int $y, int $z, Random $random) : void{
 		$this->placeTrunk($level, $x, $y, $z, $random, $this->treeHeight - 1);
 
 		for($yy = $y - 3 + $this->treeHeight; $yy <= $y + $this->treeHeight; ++$yy){
@@ -117,7 +118,7 @@ abstract class Tree{
 		}
 	}
 
-	protected function placeTrunk(ChunkManager $level, int $x, int $y, int $z, Random $random, int $trunkHeight){
+	protected function placeTrunk(ChunkManager $level, int $x, int $y, int $z, Random $random, int $trunkHeight) : void{
 		// The base dirt block
 		$level->setBlockIdAt($x, $y - 1, $z, Block::DIRT);
 

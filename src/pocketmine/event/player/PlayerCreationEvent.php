@@ -24,82 +24,57 @@ declare(strict_types=1);
 namespace pocketmine\event\player;
 
 use pocketmine\event\Event;
-use pocketmine\network\SourceInterface;
+use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\NetworkInterface;
 use pocketmine\Player;
 
 /**
  * Allows the creation of players overriding the base Player class
  */
 class PlayerCreationEvent extends Event{
-	public static $handlerList = null;
 
-	/** @var SourceInterface */
-	private $interface;
-	/** @var mixed */
-	private $clientId;
-	/** @var string */
-	private $address;
-	/** @var int */
-	private $port;
+	/** @var NetworkSession */
+	private $session;
 
 	/** @var Player::class */
-	private $baseClass;
+	private $baseClass = Player::class;
 	/** @var Player::class */
-	private $playerClass;
+	private $playerClass = Player::class;
+
 
 	/**
-	 * @param SourceInterface $interface
-	 * @param Player::class   $baseClass
-	 * @param Player::class   $playerClass
-	 * @param mixed           $clientId
-	 * @param string          $address
-	 * @param int             $port
+	 * @param NetworkSession $session
 	 */
-	public function __construct(SourceInterface $interface, $baseClass, $playerClass, $clientId, string $address, int $port){
-		$this->interface = $interface;
-		$this->clientId = $clientId;
-		$this->address = $address;
-		$this->port = $port;
-
-		if(!is_a($baseClass, Player::class, true)){
-			throw new \RuntimeException("Base class $baseClass must extend " . Player::class);
-		}
-
-		$this->baseClass = $baseClass;
-
-		if(!is_a($playerClass, Player::class, true)){
-			throw new \RuntimeException("Class $playerClass must extend " . Player::class);
-		}
-
-		$this->playerClass = $playerClass;
+	public function __construct(NetworkSession $session){
+		$this->session = $session;
 	}
 
 	/**
-	 * @return SourceInterface
+	 * @return NetworkInterface
 	 */
-	public function getInterface() : SourceInterface{
-		return $this->interface;
+	public function getInterface() : NetworkInterface{
+		return $this->session->getInterface();
+	}
+
+	/**
+	 * @return NetworkSession
+	 */
+	public function getNetworkSession() : NetworkSession{
+		return $this->session;
 	}
 
 	/**
 	 * @return string
 	 */
 	public function getAddress() : string{
-		return $this->address;
+		return $this->session->getIp();
 	}
 
 	/**
 	 * @return int
 	 */
 	public function getPort() : int{
-		return $this->port;
-	}
-
-	/**
-	 * @return mixed
-	 */
-	public function getClientId(){
-		return $this->clientId;
+		return $this->session->getPort();
 	}
 
 	/**
@@ -137,5 +112,4 @@ class PlayerCreationEvent extends Event{
 
 		$this->playerClass = $class;
 	}
-
 }

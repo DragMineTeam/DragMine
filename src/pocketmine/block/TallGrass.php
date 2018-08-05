@@ -25,7 +25,6 @@ namespace pocketmine\block;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\level\Level;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
@@ -47,10 +46,10 @@ class TallGrass extends Flowable{
 			1 => "Tall Grass",
 			2 => "Fern"
 		];
-		return $names[$this->meta & 0x03] ?? "Unknown";
+		return $names[$this->getVariant()] ?? "Unknown";
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$down = $this->getSide(Vector3::SIDE_DOWN);
 		if($down->getId() === self::GRASS){
 			$this->getLevel()->setBlock($blockReplace, $this, true);
@@ -61,27 +60,39 @@ class TallGrass extends Flowable{
 		return false;
 	}
 
-
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if($this->getSide(Vector3::SIDE_DOWN)->isTransparent() === true){ //Replace with common break method
-				$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), true, true);
-
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_DOWN)->isTransparent()){ //Replace with common break method
+			$this->getLevel()->setBlock($this, BlockFactory::get(Block::AIR), true, true);
 		}
+	}
 
-		return false;
+	public function getToolType() : int{
+		return BlockToolType::TYPE_SHEARS;
+	}
+
+	public function getToolHarvestLevel() : int{
+		return 1;
 	}
 
 	public function getDrops(Item $item) : array{
+		if($this->isCompatibleWithTool($item)){
+			return parent::getDrops($item);
+		}
+
 		if(mt_rand(0, 15) === 0){
 			return [
-				ItemFactory::get(Item::WHEAT_SEEDS, 0, 1)
+				ItemFactory::get(Item::WHEAT_SEEDS)
 			];
 		}
 
 		return [];
 	}
 
+	public function getFlameEncouragement() : int{
+		return 60;
+	}
+
+	public function getFlammability() : int{
+		return 100;
+	}
 }

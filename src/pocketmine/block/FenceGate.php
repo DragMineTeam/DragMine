@@ -24,7 +24,6 @@ declare(strict_types=1);
 namespace pocketmine\block;
 
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
 use pocketmine\level\sound\DoorSound;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
@@ -37,12 +36,11 @@ class FenceGate extends Transparent{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_AXE;
+		return BlockToolType::TYPE_AXE;
 	}
 
 
-	protected function recalculateBoundingBox(){
-
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
 		if(($this->getDamage() & 0x04) > 0){
 			return null;
 		}
@@ -50,26 +48,26 @@ class FenceGate extends Transparent{
 		$i = ($this->getDamage() & 0x03);
 		if($i === 2 or $i === 0){
 			return new AxisAlignedBB(
-				$this->x,
-				$this->y,
-				$this->z + 0.375,
-				$this->x + 1,
-				$this->y + 1.5,
-				$this->z + 0.625
+				0,
+				0,
+				0.375,
+				1,
+				1.5,
+				0.625
 			);
 		}else{
 			return new AxisAlignedBB(
-				$this->x + 0.375,
-				$this->y,
-				$this->z,
-				$this->x + 0.625,
-				$this->y + 1.5,
-				$this->z + 1
+				0.375,
+				0,
+				0,
+				0.625,
+				1.5,
+				1
 			);
 		}
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
 		$this->meta = ($player instanceof Player ? ($player->getDirection() - 1) & 0x03 : 0);
 		$this->getLevel()->setBlock($blockReplace, $this, true, true);
 
@@ -94,5 +92,13 @@ class FenceGate extends Transparent{
 
 	public function getFuelTime() : int{
 		return 300;
+	}
+
+	public function getFlameEncouragement() : int{
+		return 5;
+	}
+
+	public function getFlammability() : int{
+		return 20;
 	}
 }

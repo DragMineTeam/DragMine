@@ -32,7 +32,6 @@ use pocketmine\command\defaults\DifficultyCommand;
 use pocketmine\command\defaults\DumpMemoryCommand;
 use pocketmine\command\defaults\EffectCommand;
 use pocketmine\command\defaults\EnchantCommand;
-use pocketmine\command\defaults\ExtractPluginCommand;
 use pocketmine\command\defaults\GamemodeCommand;
 use pocketmine\command\defaults\GarbageCollectorCommand;
 use pocketmine\command\defaults\GiveCommand;
@@ -40,8 +39,6 @@ use pocketmine\command\defaults\HelpCommand;
 use pocketmine\command\defaults\KickCommand;
 use pocketmine\command\defaults\KillCommand;
 use pocketmine\command\defaults\ListCommand;
-use pocketmine\command\defaults\MakePluginCommand;
-use pocketmine\command\defaults\MakeServerCommand;
 use pocketmine\command\defaults\MeCommand;
 use pocketmine\command\defaults\OpCommand;
 use pocketmine\command\defaults\PardonCommand;
@@ -68,7 +65,7 @@ use pocketmine\command\defaults\VanillaCommand;
 use pocketmine\command\defaults\VersionCommand;
 use pocketmine\command\defaults\WhitelistCommand;
 use pocketmine\command\utils\InvalidCommandSyntaxException;
-use pocketmine\event\TranslationContainer;
+use pocketmine\lang\TranslationContainer;
 use pocketmine\Server;
 use pocketmine\utils\TextFormat;
 
@@ -125,11 +122,7 @@ class SimpleCommandMap implements CommandMap{
 			new TitleCommand("title"),
 			new TransferServerCommand("transferserver"),
 			new VersionCommand("version"),
-			new WhitelistCommand("whitelist"),
-			 new ExtractPluginCommand("extractplugin"),
-			new MakePluginCommand("makeplugin"),
-			new MakeServerCommand("makeserver")
-
+			new WhitelistCommand("whitelist")
 		]);
 
 		if($this->server->getProperty("debug.commands", false)){
@@ -179,6 +172,23 @@ class SimpleCommandMap implements CommandMap{
 		$command->register($this);
 
 		return $registered;
+	}
+
+	/**
+	 * @param Command $command
+	 *
+	 * @return bool
+	 */
+	public function unregister(Command $command) : bool{
+		foreach($this->knownCommands as $lbl => $cmd){
+			if($cmd === $command){
+				unset($this->knownCommands[$lbl]);
+			}
+		}
+
+		$command->unregister($this);
+
+		return true;
 	}
 
 	/**
@@ -335,6 +345,4 @@ class SimpleCommandMap implements CommandMap{
 
 		}
 	}
-
-
 }

@@ -24,18 +24,17 @@ declare(strict_types=1);
 /**
  * Permission related classes
  */
-namespace pocketmine\permission;
 
-use pocketmine\Server;
+namespace pocketmine\permission;
 
 /**
  * Represents a permission
  */
 class Permission{
-	const DEFAULT_OP = "op";
-	const DEFAULT_NOT_OP = "notop";
-	const DEFAULT_TRUE = "true";
-	const DEFAULT_FALSE = "false";
+	public const DEFAULT_OP = "op";
+	public const DEFAULT_NOT_OP = "notop";
+	public const DEFAULT_TRUE = "true";
+	public const DEFAULT_FALSE = "false";
 
 	public static $DEFAULT_PERMISSION = self::DEFAULT_OP;
 
@@ -46,7 +45,7 @@ class Permission{
 	 */
 	public static function getByName($value) : string{
 		if(is_bool($value)){
-			if($value === true){
+			if($value){
 				return "true";
 			}else{
 				return "false";
@@ -74,124 +73,6 @@ class Permission{
 
 			default:
 				return self::DEFAULT_FALSE;
-		}
-	}
-
-	/** @var string */
-	private $name;
-
-	/** @var string */
-	private $description;
-
-	/**
-	 * @var string[]
-	 */
-	private $children;
-
-	/** @var string */
-	private $defaultValue;
-
-	/**
-	 * Creates a new Permission object to be attached to Permissible objects
-	 *
-	 * @param string       $name
-	 * @param string       $description
-	 * @param string       $defaultValue
-	 * @param Permission[] $children
-	 */
-	public function __construct(string $name, string $description = null, string $defaultValue = null, array $children = []){
-		$this->name = $name;
-		$this->description = $description ?? "";
-		$this->defaultValue = $defaultValue ?? self::$DEFAULT_PERMISSION;
-		$this->children = $children;
-
-		$this->recalculatePermissibles();
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getName() : string{
-		return $this->name;
-	}
-
-	/**
-	 * @return string[]
-	 */
-	public function &getChildren() : array{
-		return $this->children;
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDefault() : string{
-		return $this->defaultValue;
-	}
-
-	/**
-	 * @param string $value
-	 */
-	public function setDefault(string $value){
-		if($value !== $this->defaultValue){
-			$this->defaultValue = $value;
-			$this->recalculatePermissibles();
-		}
-	}
-
-	/**
-	 * @return string
-	 */
-	public function getDescription() : string{
-		return $this->description;
-	}
-
-	/**
-	 * @param string $value
-	 */
-	public function setDescription(string $value){
-		$this->description = $value;
-	}
-
-	/**
-	 * @return Permissible[]
-	 */
-	public function getPermissibles() : array{
-		return Server::getInstance()->getPluginManager()->getPermissionSubscriptions($this->name);
-	}
-
-	public function recalculatePermissibles(){
-		$perms = $this->getPermissibles();
-
-		Server::getInstance()->getPluginManager()->recalculatePermissionDefaults($this);
-
-		foreach($perms as $p){
-			$p->recalculatePermissions();
-		}
-	}
-
-
-	/**
-	 * @param string|Permission $name
-	 * @param                   $value
-	 *
-	 * @return Permission|null Permission if $name is a string, null if it's a Permission
-	 */
-	public function addParent($name, $value){
-		if($name instanceof Permission){
-			$name->getChildren()[$this->getName()] = $value;
-			$name->recalculatePermissibles();
-			return null;
-		}else{
-			$perm = Server::getInstance()->getPluginManager()->getPermission($name);
-			if($perm === null){
-				$perm = new Permission($name);
-				Server::getInstance()->getPluginManager()->addPermission($perm);
-			}
-
-			$this->addParent($perm, $value);
-
-			return $perm;
 		}
 	}
 
@@ -252,8 +133,123 @@ class Permission{
 		}
 
 		return new Permission($name, $desc, $default, $children);
+	}
 
+	/** @var string */
+	private $name;
+
+	/** @var string */
+	private $description;
+
+	/**
+	 * @var bool[]
+	 */
+	private $children;
+
+	/** @var string */
+	private $defaultValue;
+
+	/**
+	 * Creates a new Permission object to be attached to Permissible objects
+	 *
+	 * @param string $name
+	 * @param string $description
+	 * @param string $defaultValue
+	 * @param bool[] $children
+	 */
+	public function __construct(string $name, string $description = null, string $defaultValue = null, array $children = []){
+		$this->name = $name;
+		$this->description = $description ?? "";
+		$this->defaultValue = $defaultValue ?? self::$DEFAULT_PERMISSION;
+		$this->children = $children;
+
+		$this->recalculatePermissibles();
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getName() : string{
+		return $this->name;
+	}
+
+	/**
+	 * @return bool[]
+	 */
+	public function &getChildren() : array{
+		return $this->children;
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDefault() : string{
+		return $this->defaultValue;
+	}
+
+	/**
+	 * @param string $value
+	 */
+	public function setDefault(string $value){
+		if($value !== $this->defaultValue){
+			$this->defaultValue = $value;
+			$this->recalculatePermissibles();
+		}
+	}
+
+	/**
+	 * @return string
+	 */
+	public function getDescription() : string{
+		return $this->description;
+	}
+
+	/**
+	 * @param string $value
+	 */
+	public function setDescription(string $value){
+		$this->description = $value;
+	}
+
+	/**
+	 * @return Permissible[]
+	 */
+	public function getPermissibles() : array{
+		return PermissionManager::getInstance()->getPermissionSubscriptions($this->name);
+	}
+
+	public function recalculatePermissibles(){
+		$perms = $this->getPermissibles();
+
+		PermissionManager::getInstance()->recalculatePermissionDefaults($this);
+
+		foreach($perms as $p){
+			$p->recalculatePermissions();
+		}
 	}
 
 
+	/**
+	 * @param string|Permission $name
+	 * @param bool              $value
+	 *
+	 * @return Permission|null Permission if $name is a string, null if it's a Permission
+	 */
+	public function addParent($name, bool $value){
+		if($name instanceof Permission){
+			$name->getChildren()[$this->getName()] = $value;
+			$name->recalculatePermissibles();
+			return null;
+		}else{
+			$perm = PermissionManager::getInstance()->getPermission($name);
+			if($perm === null){
+				$perm = new Permission($name);
+				PermissionManager::getInstance()->addPermission($perm);
+			}
+
+			$this->addParent($perm, $value);
+
+			return $perm;
+		}
+	}
 }

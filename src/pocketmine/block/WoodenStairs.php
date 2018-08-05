@@ -23,10 +23,6 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\item\Item;
-use pocketmine\item\ItemFactory;
-use pocketmine\item\Tool;
-
 class WoodenStairs extends Stair{
 
 	public function getHardness() : float{
@@ -38,13 +34,14 @@ class WoodenStairs extends Stair{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_AXE;
+		return BlockToolType::TYPE_AXE;
 	}
 
-	public function getDrops(Item $item) : array{
-		//TODO: Hierarchy problem (base class is for stone stairs)
-		return [
-			ItemFactory::get($this->getItemId(), $this->getVariant(), 1)
-		];
+	public function getFlameEncouragement() : int{
+		return 5;
+	}
+
+	public function getFlammability() : int{
+		return 20;
 	}
 }

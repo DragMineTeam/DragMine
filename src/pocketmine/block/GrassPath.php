@@ -25,8 +25,8 @@ namespace pocketmine\block;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\item\Tool;
 use pocketmine\math\AxisAlignedBB;
+use pocketmine\math\Vector3;
 
 class GrassPath extends Transparent{
 
@@ -41,27 +41,26 @@ class GrassPath extends Transparent{
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_SHOVEL;
+		return BlockToolType::TYPE_SHOVEL;
 	}
 
-	protected function recalculateBoundingBox(){
-		return new AxisAlignedBB(
-			$this->x,
-			$this->y,
-			$this->z,
-			$this->x + 1,
-			$this->y + 1, //TODO: this should be 0.9375, but MCPE currently treats them as a full block (https://bugs.mojang.com/browse/MCPE-12109)
-			$this->z + 1
-		);
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		return new AxisAlignedBB(0, 0, 0, 1, 1, 1); //TODO: y max should be 0.9375, but MCPE currently treats them as a full block (https://bugs.mojang.com/browse/MCPE-12109)
 	}
 
 	public function getHardness() : float{
 		return 0.6;
 	}
 
-	public function getDrops(Item $item) : array{
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_UP)->isSolid()){
+			$this->level->setBlock($this, BlockFactory::get(Block::DIRT), true);
+		}
+	}
+
+	public function getDropsForCompatibleTool(Item $item) : array{
 		return [
-			ItemFactory::get(Item::DIRT, 0, 1)
+			ItemFactory::get(Item::DIRT)
 		];
 	}
 }

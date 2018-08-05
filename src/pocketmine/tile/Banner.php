@@ -23,83 +23,105 @@ declare(strict_types=1);
 
 namespace pocketmine\tile;
 
-use pocketmine\level\Level;
+use pocketmine\item\Item;
+use pocketmine\math\Vector3;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\IntTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\nbt\tag\StringTag;
+use pocketmine\Player;
 
-class Banner extends Spawnable{
-
-	const PATTERN_BOTTOM_STRIPE = "bs";
-	const PATTERN_TOP_STRIPE = "ts";
-	const PATTERN_LEFT_STRIPE = "ls";
-	const PATTERN_RIGHT_STRIPE = "rs";
-	const PATTERN_CENTER_STRIPE = "cs";
-	const PATTERN_MIDDLE_STRIPE = "ms";
-	const PATTERN_DOWN_RIGHT_STRIPE = "drs";
-	const PATTERN_DOWN_LEFT_STRIPE = "dls";
-	const PATTERN_SMALL_STRIPES = "ss";
-	const PATTERN_DIAGONAL_CROSS = "cr";
-	const PATTERN_SQUARE_CROSS = "sc";
-	const PATTERN_LEFT_OF_DIAGONAL = "ld";
-	const PATTERN_RIGHT_OF_UPSIDE_DOWN_DIAGONAL = "rud";
-	const PATTERN_LEFT_OF_UPSIDE_DOWN_DIAGONAL = "lud";
-	const PATTERN_RIGHT_OF_DIAGONAL = "rd";
-	const PATTERN_VERTICAL_HALF_LEFT = "vh";
-	const PATTERN_VERTICAL_HALF_RIGHT = "vhr";
-	const PATTERN_HORIZONTAL_HALF_TOP = "hh";
-	const PATTERN_HORIZONTAL_HALF_BOTTOM = "hhb";
-	const PATTERN_BOTTOM_LEFT_CORNER = "bl";
-	const PATTERN_BOTTOM_RIGHT_CORNER = "br";
-	const PATTERN_TOP_LEFT_CORNER = "tl";
-	const PATTERN_TOP_RIGHT_CORNER = "tr";
-	const PATTERN_BOTTOM_TRIANGLE = "bt";
-	const PATTERN_TOP_TRIANGLE = "tt";
-	const PATTERN_BOTTOM_TRIANGLE_SAWTOOTH = "bts";
-	const PATTERN_TOP_TRIANGLE_SAWTOOTH = "tts";
-	const PATTERN_MIDDLE_CIRCLE = "mc";
-	const PATTERN_MIDDLE_RHOMBUS = "mr";
-	const PATTERN_BORDER = "bo";
-	const PATTERN_CURLY_BORDER = "cbo";
-	const PATTERN_BRICK = "bri";
-	const PATTERN_GRADIENT = "gra";
-	const PATTERN_GRADIENT_UPSIDE_DOWN = "gru";
-	const PATTERN_CREEPER = "cre";
-	const PATTERN_SKULL = "sku";
-	const PATTERN_FLOWER = "flo";
-	const PATTERN_MOJANG = "moj";
-
-	const COLOR_BLACK = 0;
-	const COLOR_RED = 1;
-	const COLOR_GREEN = 2;
-	const COLOR_BROWN = 3;
-	const COLOR_BLUE = 4;
-	const COLOR_PURPLE = 5;
-	const COLOR_CYAN = 6;
-	const COLOR_LIGHT_GRAY = 7;
-	const COLOR_GRAY = 8;
-	const COLOR_PINK = 9;
-	const COLOR_LIME = 10;
-	const COLOR_YELLOW = 11;
-	const COLOR_LIGHT_BLUE = 12;
-	const COLOR_MAGENTA = 13;
-	const COLOR_ORANGE = 14;
-	const COLOR_WHITE = 15;
-
-	public function __construct(Level $level, CompoundTag $nbt){
-		if(!isset($nbt->Base) or !($nbt->Base instanceof IntTag)){
-			$nbt->Base = new IntTag("Base", 15);
-		}
-		if(!isset($nbt->Patterns) or !($nbt->Patterns instanceof ListTag)){
-			$nbt->Patterns = new ListTag("Patterns");
-		}
-		parent::__construct($level, $nbt);
+class Banner extends Spawnable implements Nameable{
+	use NameableTrait {
+		addAdditionalSpawnData as addNameSpawnData;
+		createAdditionalNBT as createNameNBT;
 	}
 
-	public function addAdditionalSpawnData(CompoundTag $nbt){
-		$nbt->Patterns = $this->namedtag->Patterns;
-		$nbt->Base = $this->namedtag->Base;
+	public const TAG_BASE = "Base";
+	public const TAG_PATTERNS = "Patterns";
+	public const TAG_PATTERN_COLOR = "Color";
+	public const TAG_PATTERN_NAME = "Pattern";
+
+	public const PATTERN_BOTTOM_STRIPE = "bs";
+	public const PATTERN_TOP_STRIPE = "ts";
+	public const PATTERN_LEFT_STRIPE = "ls";
+	public const PATTERN_RIGHT_STRIPE = "rs";
+	public const PATTERN_CENTER_STRIPE = "cs";
+	public const PATTERN_MIDDLE_STRIPE = "ms";
+	public const PATTERN_DOWN_RIGHT_STRIPE = "drs";
+	public const PATTERN_DOWN_LEFT_STRIPE = "dls";
+	public const PATTERN_SMALL_STRIPES = "ss";
+	public const PATTERN_DIAGONAL_CROSS = "cr";
+	public const PATTERN_SQUARE_CROSS = "sc";
+	public const PATTERN_LEFT_OF_DIAGONAL = "ld";
+	public const PATTERN_RIGHT_OF_UPSIDE_DOWN_DIAGONAL = "rud";
+	public const PATTERN_LEFT_OF_UPSIDE_DOWN_DIAGONAL = "lud";
+	public const PATTERN_RIGHT_OF_DIAGONAL = "rd";
+	public const PATTERN_VERTICAL_HALF_LEFT = "vh";
+	public const PATTERN_VERTICAL_HALF_RIGHT = "vhr";
+	public const PATTERN_HORIZONTAL_HALF_TOP = "hh";
+	public const PATTERN_HORIZONTAL_HALF_BOTTOM = "hhb";
+	public const PATTERN_BOTTOM_LEFT_CORNER = "bl";
+	public const PATTERN_BOTTOM_RIGHT_CORNER = "br";
+	public const PATTERN_TOP_LEFT_CORNER = "tl";
+	public const PATTERN_TOP_RIGHT_CORNER = "tr";
+	public const PATTERN_BOTTOM_TRIANGLE = "bt";
+	public const PATTERN_TOP_TRIANGLE = "tt";
+	public const PATTERN_BOTTOM_TRIANGLE_SAWTOOTH = "bts";
+	public const PATTERN_TOP_TRIANGLE_SAWTOOTH = "tts";
+	public const PATTERN_MIDDLE_CIRCLE = "mc";
+	public const PATTERN_MIDDLE_RHOMBUS = "mr";
+	public const PATTERN_BORDER = "bo";
+	public const PATTERN_CURLY_BORDER = "cbo";
+	public const PATTERN_BRICK = "bri";
+	public const PATTERN_GRADIENT = "gra";
+	public const PATTERN_GRADIENT_UPSIDE_DOWN = "gru";
+	public const PATTERN_CREEPER = "cre";
+	public const PATTERN_SKULL = "sku";
+	public const PATTERN_FLOWER = "flo";
+	public const PATTERN_MOJANG = "moj";
+
+	public const COLOR_BLACK = 0;
+	public const COLOR_RED = 1;
+	public const COLOR_GREEN = 2;
+	public const COLOR_BROWN = 3;
+	public const COLOR_BLUE = 4;
+	public const COLOR_PURPLE = 5;
+	public const COLOR_CYAN = 6;
+	public const COLOR_LIGHT_GRAY = 7;
+	public const COLOR_GRAY = 8;
+	public const COLOR_PINK = 9;
+	public const COLOR_LIME = 10;
+	public const COLOR_YELLOW = 11;
+	public const COLOR_LIGHT_BLUE = 12;
+	public const COLOR_MAGENTA = 13;
+	public const COLOR_ORANGE = 14;
+	public const COLOR_WHITE = 15;
+
+	/** @var int */
+	private $baseColor;
+	/**
+	 * @var ListTag
+	 * TODO: break this down further and remove runtime NBT from here entirely
+	 */
+	private $patterns;
+
+	protected function readSaveData(CompoundTag $nbt) : void{
+		$this->baseColor = $nbt->getInt(self::TAG_BASE, self::COLOR_BLACK, true);
+		$this->patterns = $nbt->getListTag(self::TAG_PATTERNS) ?? new ListTag(self::TAG_PATTERNS);
+		$this->loadName($nbt);
+	}
+
+	protected function writeSaveData(CompoundTag $nbt) : void{
+		$nbt->setInt(self::TAG_BASE, $this->baseColor);
+		$nbt->setTag($this->patterns);
+		$this->saveName($nbt);
+	}
+
+	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+		$nbt->setInt(self::TAG_BASE, $this->baseColor);
+		$nbt->setTag($this->patterns);
+		$this->addNameSpawnData($nbt);
 	}
 
 	/**
@@ -108,7 +130,7 @@ class Banner extends Spawnable{
 	 * @return int
 	 */
 	public function getBaseColor() : int{
-		return $this->namedtag->Base->getValue();
+		return $this->baseColor;
 	}
 
 	/**
@@ -117,20 +139,8 @@ class Banner extends Spawnable{
 	 * @param int $color
 	 */
 	public function setBaseColor(int $color) : void{
-		$this->namedtag->Base->setValue($color & 0x0f);
+		$this->baseColor = $color;
 		$this->onChanged();
-	}
-
-	/**
-	 * Returns an array containing all pattern IDs
-	 *
-	 * @return array
-	 */
-	public function getPatternIds() : array{
-		$keys = array_keys((array) $this->namedtag->Patterns);
-		return array_filter($keys, function($key){
-			return is_numeric($key);
-		}, ARRAY_FILTER_USE_KEY);
 	}
 
 	/**
@@ -142,18 +152,13 @@ class Banner extends Spawnable{
 	 * @return int ID of pattern.
 	 */
 	public function addPattern(string $pattern, int $color) : int{
-		$patternId = 0;
-		if($this->getPatternCount() !== 0) {
-			$patternId = (int)max($this->getPatternIds()) + 1;
-		}
-
-		$this->namedtag->Patterns->{$patternId} = new CompoundTag("", [
-			new IntTag("Color", $color & 0x0f),
-			new StringTag("Pattern", $pattern)
-		]);
+		$this->patterns->push(new CompoundTag("", [
+			new IntTag(self::TAG_PATTERN_COLOR, $color & 0x0f),
+			new StringTag(self::TAG_PATTERN_NAME, $pattern)
+		]));
 
 		$this->onChanged();
-		return $patternId;
+		return $this->patterns->count() - 1; //Last offset in the list
 	}
 
 	/**
@@ -164,7 +169,7 @@ class Banner extends Spawnable{
 	 * @return bool
 	 */
 	public function patternExists(int $patternId) : bool{
-		return isset($this->namedtag->Patterns->{$patternId});
+		return $this->patterns->isset($patternId);
 	}
 
 	/**
@@ -179,9 +184,12 @@ class Banner extends Spawnable{
 			return [];
 		}
 
+		$patternTag = $this->patterns->get($patternId);
+		assert($patternTag instanceof CompoundTag);
+
 		return [
-			"Color" => $this->namedtag->Patterns->{$patternId}->Color->getValue(),
-			"Pattern" => $this->namedtag->Patterns->{$patternId}->Pattern->getValue()
+			self::TAG_PATTERN_COLOR => $patternTag->getInt(self::TAG_PATTERN_COLOR),
+			self::TAG_PATTERN_NAME => $patternTag->getString(self::TAG_PATTERN_NAME)
 		];
 	}
 
@@ -199,10 +207,10 @@ class Banner extends Spawnable{
 			return false;
 		}
 
-		$this->namedtag->Patterns->{$patternId}->setValue([
-			new IntTag("Color", $color & 0x0f),
-			new StringTag("Pattern", $pattern)
-		]);
+		$this->patterns->set($patternId, new CompoundTag("", [
+			new IntTag(self::TAG_PATTERN_COLOR, $color & 0x0f),
+			new StringTag(self::TAG_PATTERN_NAME, $pattern)
+		]));
 
 		$this->onChanged();
 		return true;
@@ -219,7 +227,8 @@ class Banner extends Spawnable{
 		if(!$this->patternExists($patternId)){
 			return false;
 		}
-		unset($this->namedtag->Patterns->{$patternId});
+
+		$this->patterns->remove($patternId);
 
 		$this->onChanged();
 		return true;
@@ -231,16 +240,7 @@ class Banner extends Spawnable{
 	 * @return bool indicating whether the banner was empty or not.
 	 */
 	public function deleteTopPattern() : bool{
-		$keys = $this->getPatternIds();
-		if(empty($keys)){
-			return false;
-		}
-
-		$index = max($keys);
-		unset($this->namedtag->Patterns->{$index});
-
-		$this->onChanged();
-		return true;
+		return $this->deletePattern($this->getPatternCount() - 1);
 	}
 
 	/**
@@ -249,16 +249,7 @@ class Banner extends Spawnable{
 	 * @return bool indicating whether the banner was empty or not.
 	 */
 	public function deleteBottomPattern() : bool{
-		$keys = $this->getPatternIds();
-		if(empty($keys)){
-			return false;
-		}
-
-		$index = min($keys);
-		unset($this->namedtag->Patterns->{$index});
-
-		$this->onChanged();
-		return true;
+		return $this->deletePattern(0);
 	}
 
 	/**
@@ -267,6 +258,29 @@ class Banner extends Spawnable{
 	 * @return int
 	 */
 	public function getPatternCount() : int{
-		return count($this->getPatternIds());
+		return $this->patterns->count();
+	}
+
+	/**
+	 * @return ListTag
+	 */
+	public function getPatterns() : ListTag{
+		return $this->patterns;
+	}
+
+	protected static function createAdditionalNBT(CompoundTag $nbt, Vector3 $pos, ?int $face = null, ?Item $item = null, ?Player $player = null) : void{
+		$nbt->setInt(self::TAG_BASE, $item !== null ? $item->getDamage() & 0x0f : 0);
+
+		if($item !== null){
+			if($item->getNamedTag()->hasTag(self::TAG_PATTERNS, ListTag::class)){
+				$nbt->setTag($item->getNamedTag()->getListTag(self::TAG_PATTERNS));
+			}
+
+			self::createNameNBT($nbt, $pos, $face, $item, $player);
+		}
+	}
+
+	public function getDefaultName() : string{
+		return "Banner";
 	}
 }

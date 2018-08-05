@@ -27,11 +27,11 @@ namespace pocketmine\network\mcpe\protocol;
 
 
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 use pocketmine\network\mcpe\protocol\types\PlayerPermissions;
 
 class StartGamePacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::START_GAME_PACKET;
+	public const NETWORK_ID = ProtocolInfo::START_GAME_PACKET;
 
 	/** @var int */
 	public $entityUniqueId;
@@ -103,7 +103,7 @@ class StartGamePacket extends DataPacket{
 	/** @var bool */
 	public $hasPlatformBroadcast = false;
 	/** @var int */
-	public $platformBroadcastMode = 0;	
+	public $platformBroadcastMode = 0;
 	/** @var bool */
 	public $xboxLiveBroadcastIntent = false;
 	/** @var bool */
@@ -120,18 +120,18 @@ class StartGamePacket extends DataPacket{
 	/** @var string */
 	public $premiumWorldTemplateId = "";
 	/** @var bool */
-	public $unknownBool = false;
+	public $isTrial = false;
 	/** @var int */
-	public $currentTick = 0;
+	public $currentTick = 0; //only used if isTrial is true
 	/** @var int */
 	public $enchantmentSeed = 0;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->playerGamemode = $this->getVarInt();
 
-		$this->playerPosition = $this->getVector3Obj();
+		$this->playerPosition = $this->getVector3();
 
 		$this->pitch = $this->getLFloat();
 		$this->yaw = $this->getLFloat();
@@ -171,18 +171,18 @@ class StartGamePacket extends DataPacket{
 		$this->levelId = $this->getString();
 		$this->worldName = $this->getString();
 		$this->premiumWorldTemplateId = $this->getString();
-		$this->unknownBool = $this->getBool();
+		$this->isTrial = $this->getBool();
 		$this->currentTick = $this->getLLong();
 
 		$this->enchantmentSeed = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityUniqueId($this->entityUniqueId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putVarInt($this->playerGamemode);
 
-		$this->putVector3Obj($this->playerPosition);
+		$this->putVector3($this->playerPosition);
 
 		$this->putLFloat($this->pitch);
 		$this->putLFloat($this->yaw);
@@ -222,14 +222,13 @@ class StartGamePacket extends DataPacket{
 		$this->putString($this->levelId);
 		$this->putString($this->worldName);
 		$this->putString($this->premiumWorldTemplateId);
-		$this->putBool($this->unknownBool);
+		$this->putBool($this->isTrial);
 		$this->putLLong($this->currentTick);
 
 		$this->putVarInt($this->enchantmentSeed);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleStartGame($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleStartGame($this);
 	}
-
 }

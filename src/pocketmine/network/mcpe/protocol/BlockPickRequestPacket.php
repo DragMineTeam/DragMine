@@ -27,10 +27,10 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class BlockPickRequestPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::BLOCK_PICK_REQUEST_PACKET;
+	public const NETWORK_ID = ProtocolInfo::BLOCK_PICK_REQUEST_PACKET;
 
 	/** @var int */
 	public $blockX;
@@ -43,19 +43,19 @@ class BlockPickRequestPacket extends DataPacket{
 	/** @var int */
 	public $hotbarSlot;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->getSignedBlockPosition($this->blockX, $this->blockY, $this->blockZ);
 		$this->addUserData = $this->getBool();
 		$this->hotbarSlot = $this->getByte();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putSignedBlockPosition($this->blockX, $this->blockY, $this->blockZ);
 		$this->putBool($this->addUserData);
 		$this->putByte($this->hotbarSlot);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleBlockPickRequest($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleBlockPickRequest($this);
 	}
 }

@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-class CocoaBlock extends Solid{
+class CocoaBlock extends Transparent{
 
 	protected $id = self::COCOA_BLOCK;
 
@@ -35,5 +35,17 @@ class CocoaBlock extends Solid{
 		return "Cocoa Block";
 	}
 
+	public function getHardness() : float{
+		return 0.2;
+	}
+
+	public function getToolType() : int{
+		return BlockToolType::TYPE_AXE;
+	}
+
 	//TODO
+
+	public function isAffectedBySilkTouch() : bool{
+		return false;
+	}
 }

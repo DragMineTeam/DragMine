@@ -25,21 +25,22 @@ namespace pocketmine\tile;
 
 use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
-use pocketmine\level\Level;
 use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\IntTag;
-use pocketmine\nbt\tag\ShortTag;
 
 class FlowerPot extends Spawnable{
+	public const TAG_ITEM = "item";
+	public const TAG_ITEM_DATA = "mData";
 
-	public function __construct(Level $level, CompoundTag $nbt){
-		if(!isset($nbt->item)){
-			$nbt->item = new ShortTag("item", 0);
-		}
-		if(!isset($nbt->mData)){
-			$nbt->mData = new IntTag("mData", 0);
-		}
-		parent::__construct($level, $nbt);
+	/** @var Item */
+	private $item;
+
+	protected function readSaveData(CompoundTag $nbt) : void{
+		$this->item = ItemFactory::get($nbt->getShort(self::TAG_ITEM, 0, true), $nbt->getInt(self::TAG_ITEM_DATA, 0, true), 1);
+	}
+
+	protected function writeSaveData(CompoundTag $nbt) : void{
+		$nbt->setShort(self::TAG_ITEM, $this->item->getId());
+		$nbt->setInt(self::TAG_ITEM_DATA, $this->item->getDamage());
 	}
 
 	public function canAddItem(Item $item) : bool{
@@ -66,12 +67,11 @@ class FlowerPot extends Spawnable{
 	}
 
 	public function getItem() : Item{
-		return ItemFactory::get($this->namedtag->item->getValue(), $this->namedtag->mData->getValue(), 1);
+		return clone $this->item;
 	}
 
 	public function setItem(Item $item){
-		$this->namedtag->item->setValue($item->getId());
-		$this->namedtag->mData->setValue($item->getDamage());
+		$this->item = clone $item;
 		$this->onChanged();
 	}
 
@@ -83,8 +83,8 @@ class FlowerPot extends Spawnable{
 		return $this->getItem()->isNull();
 	}
 
-	public function addAdditionalSpawnData(CompoundTag $nbt){
-		$nbt->item = $this->namedtag->item;
-		$nbt->mData = $this->namedtag->mData;
+	protected function addAdditionalSpawnData(CompoundTag $nbt) : void{
+		$nbt->setShort(self::TAG_ITEM, $this->item->getId());
+		$nbt->setInt(self::TAG_ITEM_DATA, $this->item->getDamage());
 	}
 }

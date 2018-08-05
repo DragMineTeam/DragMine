@@ -25,15 +25,15 @@ namespace pocketmine\block;
 
 use pocketmine\block\utils\PillarRotationHelper;
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
+use pocketmine\item\TieredTool;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
 class Quartz extends Solid{
 
-	const QUARTZ_NORMAL = 0;
-	const QUARTZ_CHISELED = 1;
-	const QUARTZ_PILLAR = 2;
+	public const NORMAL = 0;
+	public const CHISELED = 1;
+	public const PILLAR = 2;
 
 	protected $id = self::QUARTZ_BLOCK;
 
@@ -47,33 +47,29 @@ class Quartz extends Solid{
 
 	public function getName() : string{
 		static $names = [
-			self::QUARTZ_NORMAL => "Quartz Block",
-			self::QUARTZ_CHISELED => "Chiseled Quartz Block",
-			self::QUARTZ_PILLAR => "Quartz Pillar"
+			self::NORMAL => "Quartz Block",
+			self::CHISELED => "Chiseled Quartz Block",
+			self::PILLAR => "Quartz Pillar"
 		];
-		return $names[$this->meta & 0x03] ?? "Unknown";
+		return $names[$this->getVariant()] ?? "Unknown";
 	}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
-		if($this->meta !== self::QUARTZ_NORMAL){
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
+		if($this->meta !== self::NORMAL){
 			$this->meta = PillarRotationHelper::getMetaFromFace($this->meta, $face);
 		}
 		return $this->getLevel()->setBlock($blockReplace, $this, true, true);
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_PICKAXE;
+		return BlockToolType::TYPE_PICKAXE;
+	}
+
+	public function getToolHarvestLevel() : int{
+		return TieredTool::TIER_WOODEN;
 	}
 
 	public function getVariantBitmask() : int{
 		return 0x03;
-	}
-
-	public function getDrops(Item $item) : array{
-		if($item->isPickaxe() >= Tool::TIER_WOODEN){
-			return parent::getDrops($item);
-		}
-
-		return [];
 	}
 }

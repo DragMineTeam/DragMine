@@ -26,27 +26,26 @@ declare(strict_types=1);
  */
 namespace pocketmine\command;
 
-use pocketmine\event\TextContainer;
-use pocketmine\event\TimingsHandler;
-use pocketmine\event\TranslationContainer;
-use pocketmine\Player;
+use pocketmine\lang\TextContainer;
+use pocketmine\lang\TranslationContainer;
+use pocketmine\permission\PermissionManager;
 use pocketmine\Server;
+use pocketmine\timings\TimingsHandler;
 use pocketmine\utils\TextFormat;
 
 abstract class Command{
-	/** @var array */
-	private static $defaultDataTemplate = null;
 
 	/** @var string */
 	private $name;
-	/** @var array */
-	protected $commandData = null;
 
 	/** @var string */
 	private $nextLabel;
 
 	/** @var string */
 	private $label;
+
+	/** @var string[] */
+	private $aliases = [];
 
 	/**
 	 * @var string[]
@@ -62,6 +61,9 @@ abstract class Command{
 	/** @var string */
 	protected $usageMessage;
 
+	/** @var string|null */
+	private $permission = null;
+
 	/** @var string */
 	private $permissionMessage = null;
 
@@ -75,51 +77,11 @@ abstract class Command{
 	 * @param string[] $aliases
 	 */
 	public function __construct(string $name, string $description = "", string $usageMessage = null, array $aliases = []){
-		$this->commandData = self::generateDefaultData();
 		$this->name = $name;
 		$this->setLabel($name);
 		$this->setDescription($description);
 		$this->usageMessage = $usageMessage ?? ("/" . $name);
 		$this->setAliases($aliases);
-	}
-
-	/**
-	 * Returns an array containing command data
-	 *
-	 * @return array
-	 */
-	public function getDefaultCommandData() : array{
-		return $this->commandData;
-	}
-
-	/**
-	 * Generates modified command data for the specified player
-	 * for AvailableCommandsPacket.
-	 *
-	 * @param Player $player
-	 *
-	 * @return array
-	 */
-	public function generateCustomCommandData(Player $player) : array{
-		//TODO: fix command permission filtering on join
-		/*if(!$this->testPermissionSilent($player)){
-			return null;
-		}*/
-		$customData = $this->commandData;
-		$customData["aliases"] = $this->getAliases();
-		/*foreach($customData["overloads"] as $overloadName => $overload){
-			if(isset($overload["pocketminePermission"]) and !$player->hasPermission($overload["pocketminePermission"])){
-				unset($customData["overloads"][$overloadName]);
-			}
-		}*/
-		return $customData;
-	}
-
-	/**
-	 * @return array
-	 */
-	public function getOverloads() : array{
-		return $this->commandData["overloads"];
 	}
 
 	/**
@@ -142,7 +104,7 @@ abstract class Command{
 	 * @return string|null
 	 */
 	public function getPermission(){
-		return $this->commandData["pocketminePermission"] ?? null;
+		return $this->permission;
 	}
 
 
@@ -150,11 +112,7 @@ abstract class Command{
 	 * @param string|null $permission
 	 */
 	public function setPermission(string $permission = null){
-		if($permission !== null){
-			$this->commandData["pocketminePermission"] = $permission;
-		}else{
-			unset($this->commandData["pocketminePermission"]);
-		}
+		$this->permission = $permission;
 	}
 
 	/**
@@ -168,9 +126,9 @@ abstract class Command{
 		}
 
 		if($this->permissionMessage === null){
-			$target->sendMessage(new TranslationContainer(TextFormat::RED . "%commands.generic.permission"));
+			$target->sendMessage($target->getServer()->getLanguage()->translateString(TextFormat::RED . "%commands.generic.permission"));
 		}elseif($this->permissionMessage !== ""){
-			$target->sendMessage(str_replace("<permission>", $this->getPermission(), $this->permissionMessage));
+			$target->sendMessage(str_replace("<permission>", $this->permission, $this->permissionMessage));
 		}
 
 		return false;
@@ -182,11 +140,11 @@ abstract class Command{
 	 * @return bool
 	 */
 	public function testPermissionSilent(CommandSender $target) : bool{
-		if(($perm = $this->getPermission()) === null or $perm === ""){
+		if($this->permission === null or $this->permission === ""){
 			return true;
 		}
 
-		foreach(explode(";", $perm) as $permission){
+		foreach(explode(";", $this->permission) as $permission){
 			if($target->hasPermission($permission)){
 				return true;
 			}
@@ -242,7 +200,7 @@ abstract class Command{
 	public function unregister(CommandMap $commandMap) : bool{
 		if($this->allowChangesFrom($commandMap)){
 			$this->commandMap = null;
-			$this->activeAliases = $this->commandData["aliases"];
+			$this->activeAliases = $this->aliases;
 			$this->label = $this->nextLabel;
 
 			return true;
@@ -275,9 +233,9 @@ abstract class Command{
 	}
 
 	/**
-	 * @return string
+	 * @return string|null
 	 */
-	public function getPermissionMessage() : string{
+	public function getPermissionMessage() : ?string{
 		return $this->permissionMessage;
 	}
 
@@ -285,7 +243,7 @@ abstract class Command{
 	 * @return string
 	 */
 	public function getDescription() : string{
-		return $this->commandData["description"];
+		return $this->description;
 	}
 
 	/**
@@ -299,9 +257,9 @@ abstract class Command{
 	 * @param string[] $aliases
 	 */
 	public function setAliases(array $aliases){
-		$this->commandData["aliases"] = $aliases;
+		$this->aliases = $aliases;
 		if(!$this->isRegistered()){
-			$this->activeAliases = (array) $aliases;
+			$this->activeAliases = $aliases;
 		}
 	}
 
@@ -309,7 +267,7 @@ abstract class Command{
 	 * @param string $description
 	 */
 	public function setDescription(string $description){
-		$this->commandData["description"] = $description;
+		$this->description = $description;
 	}
 
 	/**
@@ -327,16 +285,6 @@ abstract class Command{
 	}
 
 	/**
-	 * @return array
-	 */
-	final public static function generateDefaultData() : array{
-		if(self::$defaultDataTemplate === null){
-			self::$defaultDataTemplate = json_decode(file_get_contents(Server::getInstance()->getFilePath() . "src/pocketmine/resources/command_default.json"), true);
-		}
-		return self::$defaultDataTemplate;
-	}
-
-	/**
 	 * @param CommandSender        $source
 	 * @param TextContainer|string $message
 	 * @param bool                 $sendToSource
@@ -346,7 +294,7 @@ abstract class Command{
 			$m = clone $message;
 			$result = "[" . $source->getName() . ": " . ($source->getServer()->getLanguage()->get($m->getText()) !== $m->getText() ? "%" : "") . $m->getText() . "]";
 
-			$users = $source->getServer()->getPluginManager()->getPermissionSubscriptions(Server::BROADCAST_CHANNEL_ADMINISTRATIVE);
+			$users = PermissionManager::getInstance()->getPermissionSubscriptions(Server::BROADCAST_CHANNEL_ADMINISTRATIVE);
 			$colored = TextFormat::GRAY . TextFormat::ITALIC . $result;
 
 			$m->setText($result);
@@ -354,12 +302,12 @@ abstract class Command{
 			$m->setText($colored);
 			$colored = clone $m;
 		}else{
-			$users = $source->getServer()->getPluginManager()->getPermissionSubscriptions(Server::BROADCAST_CHANNEL_ADMINISTRATIVE);
+			$users = PermissionManager::getInstance()->getPermissionSubscriptions(Server::BROADCAST_CHANNEL_ADMINISTRATIVE);
 			$result = new TranslationContainer("chat.type.admin", [$source->getName(), $message]);
 			$colored = new TranslationContainer(TextFormat::GRAY . TextFormat::ITALIC . "%chat.type.admin", [$source->getName(), $message]);
 		}
 
-		if($sendToSource === true and !($source instanceof ConsoleCommandSender)){
+		if($sendToSource and !($source instanceof ConsoleCommandSender)){
 			$source->sendMessage($message);
 		}
 

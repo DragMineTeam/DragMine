@@ -23,10 +23,8 @@ declare(strict_types=1);
 
 namespace pocketmine\permission;
 
-use pocketmine\Server;
-
 abstract class DefaultPermissions{
-	const ROOT = "pocketmine";
+	public const ROOT = "pocketmine";
 
 	/**
 	 * @param Permission $perm
@@ -40,9 +38,9 @@ abstract class DefaultPermissions{
 
 			return self::registerPermission($perm);
 		}
-		Server::getInstance()->getPluginManager()->addPermission($perm);
+		PermissionManager::getInstance()->addPermission($perm);
 
-		return Server::getInstance()->getPluginManager()->getPermission($perm->getName());
+		return PermissionManager::getInstance()->getPermission($perm->getName());
 	}
 
 	public static function registerCorePermissions(){
@@ -127,9 +125,6 @@ abstract class DefaultPermissions{
 		self::registerPermission(new Permission(self::ROOT . ".command.setworldspawn", "Allows the user to change the world spawn", Permission::DEFAULT_OP), $commands);
 		self::registerPermission(new Permission(self::ROOT . ".command.transferserver", "Allows the user to transfer self to another server", Permission::DEFAULT_OP), $commands);
 		self::registerPermission(new Permission(self::ROOT . ".command.title", "Allows the user to send a title to the specified player", Permission::DEFAULT_OP), $commands);
-		self::registerPermission(new Permission(self::ROOT . ".command.extractplugin", "Allows the user to extract plugin to the specified player", Permission::DEFAULT_OP), $commands);
-		self::registerPermission(new Permission(self::ROOT . ".command.makeplugin", "Allows the user to create a phar plugin from folder plugin to the specified player", Permission::DEFAULT_OP), $commands);
-		self::registerPermission(new Permission(self::ROOT . ".command.makeserver", "Allows the user to create a phar from source to the specified player", Permission::DEFAULT_OP), $commands);
 
 		$commands->recalculatePermissibles();
 

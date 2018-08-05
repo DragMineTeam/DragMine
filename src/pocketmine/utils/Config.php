@@ -23,23 +23,19 @@ declare(strict_types=1);
 
 namespace pocketmine\utils;
 
-use pocketmine\scheduler\FileWriteTask;
-use pocketmine\Server;
-
-
 /**
  * Config Class for simple config manipulation of multiple formats.
  */
 class Config{
-	const DETECT = -1; //Detect by file extension
-	const PROPERTIES = 0; // .properties
-	const CNF = Config::PROPERTIES; // .cnf
-	const JSON = 1; // .js, .json
-	const YAML = 2; // .yml, .yaml
+	public const DETECT = -1; //Detect by file extension
+	public const PROPERTIES = 0; // .properties
+	public const CNF = Config::PROPERTIES; // .cnf
+	public const JSON = 1; // .js, .json
+	public const YAML = 2; // .yml, .yaml
 	//const EXPORT = 3; // .export, .xport
-	const SERIALIZED = 4; // .sl
-	const ENUM = 5; // .txt, .list, .enum
-	const ENUMERATION = Config::ENUM;
+	public const SERIALIZED = 4; // .sl
+	public const ENUM = 5; // .txt, .list, .enum
+	public const ENUMERATION = Config::ENUM;
 
 	/** @var array */
 	private $config = [];
@@ -48,12 +44,13 @@ class Config{
 
 	/** @var string */
 	private $file;
-	/** @var bool */
-	private $correct = false;
 	/** @var int */
 	private $type = Config::DETECT;
 	/** @var int */
 	private $jsonOptions = JSON_PRETTY_PRINT | JSON_BIGINT_AS_STRING;
+
+	/** @var bool */
+	private $changed = false;
 
 	public static $formats = [
 		"properties" => Config::PROPERTIES,
@@ -74,14 +71,12 @@ class Config{
 	];
 
 	/**
-	 * @param string $file     Path of the file to be loaded
-	 * @param int    $type     Config type to load, -1 by default (detect)
-	 * @param array  $default  Array with the default values that will be written to the file if it did not exist
-	 * @param null   &$correct Sets correct to true if everything has been loaded correctly
+	 * @param string $file Path of the file to be loaded
+	 * @param int    $type Config type to load, -1 by default (detect)
+	 * @param array  $default Array with the default values that will be written to the file if it did not exist
 	 */
-	public function __construct(string $file, int $type = Config::DETECT, array $default = [], &$correct = null){
+	public function __construct(string $file, int $type = Config::DETECT, array $default = []){
 		$this->load($file, $type, $default);
-		$correct = $this->correct;
 	}
 
 	/**
@@ -90,8 +85,15 @@ class Config{
 	public function reload(){
 		$this->config = [];
 		$this->nestedCache = [];
-		$this->correct = false;
 		$this->load($this->file, $this->type);
+	}
+
+	public function hasChanged() : bool{
+		return $this->changed;
+	}
+
+	public function setChanged(bool $changed = true) : void{
+		$this->changed = $changed;
 	}
 
 	/**
@@ -104,14 +106,14 @@ class Config{
 	}
 
 	/**
-	 * @param       $file
-	 * @param int   $type
-	 * @param array $default
+	 * @param string $file
+	 * @param int    $type
+	 * @param array  $default
 	 *
-	 * @return bool
+	 * @throws \InvalidArgumentException if config type could not be auto-detected
+	 * @throws \InvalidStateException if config type is invalid
 	 */
-	public function load(string $file, int $type = Config::DETECT, array $default = []) : bool{
-		$this->correct = true;
+	public function load(string $file, int $type = Config::DETECT, array $default = []) : void{
 		$this->file = $file;
 
 		$this->type = $type;
@@ -121,7 +123,7 @@ class Config{
 			if(isset(Config::$formats[$extension])){
 				$this->type = Config::$formats[$extension];
 			}else{
-				$this->correct = false;
+				throw new \InvalidArgumentException("Cannot detect config type of " . $this->file);
 			}
 		}
 
@@ -129,99 +131,66 @@ class Config{
 			$this->config = $default;
 			$this->save();
 		}else{
-			if($this->correct === true){
-				$content = file_get_contents($this->file);
-				switch($this->type){
-					case Config::PROPERTIES:
-					case Config::CNF:
-						$this->parseProperties($content);
-						break;
-					case Config::JSON:
-						$this->config = json_decode($content, true);
-						break;
-					case Config::YAML:
-						$content = self::fixYAMLIndexes($content);
-						$this->config = yaml_parse($content);
-						break;
-					case Config::SERIALIZED:
-						$this->config = unserialize($content);
-						break;
-					case Config::ENUM:
-						$this->parseList($content);
-						break;
-					default:
-						$this->correct = false;
-
-						return false;
-				}
-				if(!is_array($this->config)){
-					$this->config = $default;
-				}
-				if($this->fillDefaults($default, $this->config) > 0){
-					$this->save();
-				}
-			}else{
-				return false;
+			$content = file_get_contents($this->file);
+			switch($this->type){
+				case Config::PROPERTIES:
+					$this->parseProperties($content);
+					break;
+				case Config::JSON:
+					$this->config = json_decode($content, true);
+					break;
+				case Config::YAML:
+					$content = self::fixYAMLIndexes($content);
+					$this->config = yaml_parse($content);
+					break;
+				case Config::SERIALIZED:
+					$this->config = unserialize($content);
+					break;
+				case Config::ENUM:
+					$this->parseList($content);
+					break;
+				default:
+					throw new \InvalidStateException("Config type is unknown");
+			}
+			if(!is_array($this->config)){
+				$this->config = $default;
+			}
+			if($this->fillDefaults($default, $this->config) > 0){
+				$this->save();
 			}
 		}
-
-		return true;
 	}
 
 	/**
-	 * @return bool
-	 */
-	public function check() : bool{
-		return $this->correct === true;
-	}
-
-	/**
-	 * @param bool $async
+	 * Flushes the config to disk in the appropriate format.
 	 *
-	 * @return bool
+	 * @throws \InvalidStateException if config type is not valid
 	 */
-	public function save(bool $async = false) : bool{
-		if($this->correct === true){
-			try{
-				$content = null;
-				switch($this->type){
-					case Config::PROPERTIES:
-					case Config::CNF:
-						$content = $this->writeProperties();
-						break;
-					case Config::JSON:
-						$content = json_encode($this->config, $this->jsonOptions);
-						break;
-					case Config::YAML:
-						$content = yaml_emit($this->config, YAML_UTF8_ENCODING);
-						break;
-					case Config::SERIALIZED:
-						$content = serialize($this->config);
-						break;
-					case Config::ENUM:
-						$content = implode("\r\n", array_keys($this->config));
-						break;
-					default:
-						throw new \InvalidStateException("Config type is unknown, has not been set or not detected");
-				}
-
-				if($async){
-					Server::getInstance()->getScheduler()->scheduleAsyncTask(new FileWriteTask($this->file, $content));
-				}else{
-					file_put_contents($this->file, $content);
-				}
-			}catch(\Throwable $e){
-				$logger = Server::getInstance()->getLogger();
-				$logger->critical("Could not save Config " . $this->file . ": " . $e->getMessage());
-				if(\pocketmine\DEBUG > 1){
-					$logger->logException($e);
-				}
-			}
-
-			return true;
-		}else{
-			return false;
+	public function save() : void{
+		$content = null;
+		switch($this->type){
+			case Config::PROPERTIES:
+				$content = $this->writeProperties();
+				break;
+			case Config::JSON:
+				$content = json_encode($this->config, $this->jsonOptions);
+				break;
+			case Config::YAML:
+				$content = yaml_emit($this->config, YAML_UTF8_ENCODING);
+				break;
+			case Config::SERIALIZED:
+				$content = serialize($this->config);
+				break;
+			case Config::ENUM:
+				$content = implode("\r\n", array_keys($this->config));
+				break;
+			default:
+				throw new \InvalidStateException("Config type is unknown, has not been set or not detected");
 		}
+
+		file_put_contents($this->file, $content);
+
+		$this->changed = false;
 	}
 
 	/**
@@ -237,6 +206,8 @@ class Config{
 			throw new \RuntimeException("Attempt to set JSON options for non-JSON config");
 		}
 		$this->jsonOptions = $options;
+		$this->changed = true;
+
 		return $this;
 	}
 
@@ -253,6 +224,8 @@ class Config{
 			throw new \RuntimeException("Attempt to enable JSON option for non-JSON config");
 		}
 		$this->jsonOptions |= $option;
+		$this->changed = true;
+
 		return $this;
 	}
 
@@ -269,6 +242,8 @@ class Config{
 			throw new \RuntimeException("Attempt to disable JSON option for non-JSON config");
 		}
 		$this->jsonOptions &= ~$option;
+		$this->changed = true;
+
 		return $this;
 	}
 
@@ -342,7 +317,8 @@ class Config{
 		}
 
 		$base = $value;
-		$this->nestedCache[$key] = $value;
+		$this->nestedCache = [];
+		$this->changed = true;
 	}
 
 	/**
@@ -376,6 +352,27 @@ class Config{
 		return $this->nestedCache[$key] = $base;
 	}
 
+	public function removeNested(string $key) : void{
+		$this->nestedCache = [];
+		$this->changed = true;
+
+		$vars = explode(".", $key);
+
+		$currentNode =& $this->config;
+		while(count($vars) > 0){
+			$nodeName = array_shift($vars);
+			if(isset($currentNode[$nodeName])){
+				if(empty($vars)){ //final node
+					unset($currentNode[$nodeName]);
+				}elseif(is_array($currentNode[$nodeName])){
+					$currentNode =& $currentNode[$nodeName];
+				}
+			}else{
+				break;
+			}
+		}
+	}
+
 	/**
 	 * @param       $k
 	 * @param mixed $default
@@ -383,7 +380,7 @@ class Config{
 	 * @return bool|mixed
 	 */
 	public function get($k, $default = false){
-		return ($this->correct and isset($this->config[$k])) ? $this->config[$k] : $default;
+		return $this->config[$k] ?? $default;
 	}
 
 	/**
@@ -392,6 +389,7 @@ class Config{
 	 */
 	public function set($k, $v = true){
 		$this->config[$k] = $v;
+		$this->changed = true;
 		foreach($this->nestedCache as $nestedKey => $nvalue){
 			if(substr($nestedKey, 0, strlen($k) + 1) === ($k . ".")){
 				unset($this->nestedCache[$nestedKey]);
@@ -404,6 +402,7 @@ class Config{
 	 */
 	public function setAll(array $v){
 		$this->config = $v;
+		$this->changed = true;
 	}
 
 	/**
@@ -413,7 +412,7 @@ class Config{
 	 * @return bool
 	 */
 	public function exists($k, bool $lowercase = false) : bool{
-		if($lowercase === true){
+		if($lowercase){
 			$k = strtolower($k); //Convert requested  key to lower
 			$array = array_change_key_case($this->config, CASE_LOWER); //Change all keys in array to lower
 			return isset($array[$k]); //Find $k in modified array
@@ -427,6 +426,7 @@ class Config{
 	 */
 	public function remove($k){
 		unset($this->config[$k]);
+		$this->changed = true;
 	}
 
 	/**
@@ -435,7 +435,7 @@ class Config{
 	 * @return array
 	 */
 	public function getAll(bool $keys = false) : array{
-		return ($keys === true ? array_keys($this->config) : $this->config);
+		return ($keys ? array_keys($this->config) : $this->config);
 	}
 
 	/**
@@ -465,6 +465,10 @@ class Config{
 			}
 		}
 
+		if($changed > 0){
+			$this->changed = true;
+		}
+
 		return $changed;
 	}
 
@@ -487,8 +491,8 @@ class Config{
 	private function writeProperties() : string{
 		$content = "#Properties Config file\r\n#" . date("D M j H:i:s T Y") . "\r\n";
 		foreach($this->config as $k => $v){
-			if(is_bool($v) === true){
-				$v = $v === true ? "on" : "off";
+			if(is_bool($v)){
+				$v = $v ? "on" : "off";
 			}elseif(is_array($v)){
 				$v = implode(";", $v);
 			}
@@ -502,7 +506,7 @@ class Config{
 	 * @param string $content
 	 */
 	private function parseProperties(string $content){
-		if(preg_match_all('/([a-zA-Z0-9\-_\.]*)=([^\r\n]*)/u', $content, $matches) > 0){ //false or 0 matches
+		if(preg_match_all('/([a-zA-Z0-9\-_\.]+)[ \t]*=([^\r\n]*)/u', $content, $matches) > 0){ //false or 0 matches
 			foreach($matches[1] as $i => $k){
 				$v = trim($matches[2][$i]);
 				switch(strtolower($v)){
@@ -524,5 +528,4 @@ class Config{
 			}
 		}
 	}
-
 }

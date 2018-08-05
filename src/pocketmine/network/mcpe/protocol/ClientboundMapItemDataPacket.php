@@ -27,15 +27,16 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 use pocketmine\network\mcpe\protocol\types\DimensionIds;
+use pocketmine\network\mcpe\protocol\types\MapTrackedObject;
 use pocketmine\utils\Color;
 
 class ClientboundMapItemDataPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::CLIENTBOUND_MAP_ITEM_DATA_PACKET;
+	public const NETWORK_ID = ProtocolInfo::CLIENTBOUND_MAP_ITEM_DATA_PACKET;
 
-	const BITFLAG_TEXTURE_UPDATE = 0x02;
-	const BITFLAG_DECORATION_UPDATE = 0x04;
+	public const BITFLAG_TEXTURE_UPDATE = 0x02;
+	public const BITFLAG_DECORATION_UPDATE = 0x04;
 
 	/** @var int */
 	public $mapId;
@@ -49,8 +50,8 @@ class ClientboundMapItemDataPacket extends DataPacket{
 	/** @var int */
 	public $scale;
 
-	/** @var int[] */
-	public $decorationEntityUniqueIds = [];
+	/** @var MapTrackedObject[] */
+	public $trackedEntities = [];
 	/** @var array */
 	public $decorations = [];
 
@@ -65,7 +66,7 @@ class ClientboundMapItemDataPacket extends DataPacket{
 	/** @var Color[][] */
 	public $colors = [];
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->mapId = $this->getEntityUniqueId();
 		$this->type = $this->getUnsignedVarInt();
 		$this->dimensionId = $this->getByte();
@@ -77,18 +78,27 @@ class ClientboundMapItemDataPacket extends DataPacket{
 			}
 		}
 
-		if(($this->type & (self::BITFLAG_DECORATION_UPDATE | self::BITFLAG_TEXTURE_UPDATE)) !== 0){ //Decoration bitflag or colour bitflag
+		if(($this->type & (0x08 | self::BITFLAG_DECORATION_UPDATE | self::BITFLAG_TEXTURE_UPDATE)) !== 0){ //Decoration bitflag or colour bitflag
 			$this->scale = $this->getByte();
 		}
 
 		if(($this->type & self::BITFLAG_DECORATION_UPDATE) !== 0){
 			for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-				$this->decorationEntityUniqueIds[] = $this->getEntityUniqueId();
+				$object = new MapTrackedObject();
+				$object->type = $this->getLInt();
+				if($object->type === MapTrackedObject::TYPE_BLOCK){
+					$this->getBlockPosition($object->x, $object->y, $object->z);
+				}elseif($object->type === MapTrackedObject::TYPE_ENTITY){
+					$object->entityUniqueId = $this->getEntityUniqueId();
+				}else{
+					throw new \UnexpectedValueException("Unknown map object type");
+				}
+				$this->trackedEntities[] = $object;
 			}
 
 			for($i = 0, $count = $this->getUnsignedVarInt(); $i < $count; ++$i){
-				$this->decorations[$i]["rot"] = $this->getByte();
 				$this->decorations[$i]["img"] = $this->getByte();
+				$this->decorations[$i]["rot"] = $this->getByte();
 				$this->decorations[$i]["xOffset"] = $this->getByte();
 				$this->decorations[$i]["yOffset"] = $this->getByte();
 				$this->decorations[$i]["label"] = $this->getString();
@@ -114,7 +124,7 @@ class ClientboundMapItemDataPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityUniqueId($this->mapId);
 
 		$type = 0;
@@ -138,20 +148,27 @@ class ClientboundMapItemDataPacket extends DataPacket{
 			}
 		}
 
-		if(($type & (self::BITFLAG_TEXTURE_UPDATE | self::BITFLAG_DECORATION_UPDATE)) !== 0){
+		if(($type & (0x08 | self::BITFLAG_TEXTURE_UPDATE | self::BITFLAG_DECORATION_UPDATE)) !== 0){
 			$this->putByte($this->scale);
 		}
 
 		if(($type & self::BITFLAG_DECORATION_UPDATE) !== 0){
-			$this->putUnsignedVarInt(count($this->decorationEntityUniqueIds));
-			foreach($this->decorationEntityUniqueIds as $id){
-				$this->putEntityUniqueId($id);
+			$this->putUnsignedVarInt(count($this->trackedEntities));
+			foreach($this->trackedEntities as $object){
+				$this->putLInt($object->type);
+				if($object->type === MapTrackedObject::TYPE_BLOCK){
+					$this->putBlockPosition($object->x, $object->y, $object->z);
+				}elseif($object->type === MapTrackedObject::TYPE_ENTITY){
+					$this->putEntityUniqueId($object->entityUniqueId);
+				}else{
+					throw new \UnexpectedValueException("Unknown map object type");
+				}
 			}
 
 			$this->putUnsignedVarInt($decorationCount);
 			foreach($this->decorations as $decoration){
-				$this->putByte($decoration["rot"]);
 				$this->putByte($decoration["img"]);
+				$this->putByte($decoration["rot"]);
 				$this->putByte($decoration["xOffset"]);
 				$this->putByte($decoration["yOffset"]);
 				$this->putString($decoration["label"]);
@@ -177,7 +194,7 @@ class ClientboundMapItemDataPacket extends DataPacket{
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleClientboundMapItemData($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleClientboundMapItemData($this);
 	}
 }

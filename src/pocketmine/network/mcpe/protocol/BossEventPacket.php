@@ -26,27 +26,27 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class BossEventPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::BOSS_EVENT_PACKET;
+	public const NETWORK_ID = ProtocolInfo::BOSS_EVENT_PACKET;
 
 	/* S2C: Shows the boss-bar to the player. */
-	const TYPE_SHOW = 0;
+	public const TYPE_SHOW = 0;
 	/* C2S: Registers a player to a boss fight. */
-	const TYPE_REGISTER_PLAYER = 1;
+	public const TYPE_REGISTER_PLAYER = 1;
 	/* S2C: Removes the boss-bar from the client. */
-	const TYPE_HIDE = 2;
+	public const TYPE_HIDE = 2;
 	/* C2S: Unregisters a player from a boss fight. */
-	const TYPE_UNREGISTER_PLAYER = 3;
+	public const TYPE_UNREGISTER_PLAYER = 3;
 	/* S2C: Appears not to be implemented. Currently bar percentage only appears to change in response to the target entity's health. */
-	const TYPE_HEALTH_PERCENT = 4;
+	public const TYPE_HEALTH_PERCENT = 4;
 	/* S2C: Also appears to not be implemented. Title client-side sticks as the target entity's nametag, or their entity type name if not set. */
-	const TYPE_TITLE = 5;
+	public const TYPE_TITLE = 5;
 	/* S2C: Not sure on this. Includes color and overlay fields, plus an unknown short. TODO: check this */
-	const TYPE_UNKNOWN_6 = 6;
+	public const TYPE_UNKNOWN_6 = 6;
 	/* S2C: Not implemented :( Intended to alter bar appearance, but these currently produce no effect on client-side whatsoever. */
-	const TYPE_TEXTURE = 7;
+	public const TYPE_TEXTURE = 7;
 
 	/** @var int */
 	public $bossEid;
@@ -66,7 +66,7 @@ class BossEventPacket extends DataPacket{
 	/** @var int */
 	public $overlay;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->bossEid = $this->getEntityUniqueId();
 		$this->eventType = $this->getUnsignedVarInt();
 		switch($this->eventType){
@@ -96,7 +96,7 @@ class BossEventPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityUniqueId($this->bossEid);
 		$this->putUnsignedVarInt($this->eventType);
 		switch($this->eventType){
@@ -126,8 +126,7 @@ class BossEventPacket extends DataPacket{
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleBossEvent($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleBossEvent($this);
 	}
-
 }

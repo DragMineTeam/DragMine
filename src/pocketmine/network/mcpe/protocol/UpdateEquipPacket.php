@@ -25,10 +25,10 @@ namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class UpdateEquipPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::UPDATE_EQUIP_PACKET;
+	public const NETWORK_ID = ProtocolInfo::UPDATE_EQUIP_PACKET;
 
 	/** @var int */
 	public $windowId;
@@ -41,15 +41,15 @@ class UpdateEquipPacket extends DataPacket{
 	/** @var string */
 	public $namedtag;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->windowId = $this->getByte();
 		$this->windowType = $this->getByte();
 		$this->unknownVarint = $this->getVarInt();
 		$this->entityUniqueId = $this->getEntityUniqueId();
-		$this->namedtag = $this->get(true);
+		$this->namedtag = $this->getRemaining();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putByte($this->windowId);
 		$this->putByte($this->windowType);
 		$this->putVarInt($this->unknownVarint);
@@ -57,7 +57,7 @@ class UpdateEquipPacket extends DataPacket{
 		$this->put($this->namedtag);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleUpdateEquip($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleUpdateEquip($this);
 	}
 }

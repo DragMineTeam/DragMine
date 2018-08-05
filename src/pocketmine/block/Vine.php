@@ -25,26 +25,20 @@ namespace pocketmine\block;
 
 use pocketmine\entity\Entity;
 use pocketmine\item\Item;
-use pocketmine\item\Tool;
-use pocketmine\level\Level;
 use pocketmine\math\AxisAlignedBB;
 use pocketmine\math\Vector3;
 use pocketmine\Player;
 
-class Vine extends Transparent{
-	const FLAG_SOUTH = 0x01;
-	const FLAG_WEST = 0x02;
-	const FLAG_NORTH = 0x04;
-	const FLAG_EAST = 0x08;
+class Vine extends Flowable{
+	public const FLAG_SOUTH = 0x01;
+	public const FLAG_WEST = 0x02;
+	public const FLAG_NORTH = 0x04;
+	public const FLAG_EAST = 0x08;
 
 	protected $id = self::VINE;
 
 	public function __construct(int $meta = 0){
 		$this->meta = $meta;
-	}
-
-	public function isSolid() : bool{
-		return false;
 	}
 
 	public function getName() : string{
@@ -67,117 +61,125 @@ class Vine extends Transparent{
 		return true;
 	}
 
-	public function ticksRandomly() : bool{
+	public function canBeReplaced() : bool{
 		return true;
 	}
 
-	public function onEntityCollide(Entity $entity){
+	public function onEntityCollide(Entity $entity) : void{
 		$entity->resetFallDistance();
 	}
 
-	protected function recalculateBoundingBox(){
-
-		$f1 = 1;
-		$f2 = 1;
-		$f3 = 1;
-		$f4 = 0;
-		$f5 = 0;
-		$f6 = 0;
+	protected function recalculateBoundingBox() : ?AxisAlignedBB{
+		$minX = 1;
+		$minY = 1;
+		$minZ = 1;
+		$maxX = 0;
+		$maxY = 0;
+		$maxZ = 0;
 
 		$flag = $this->meta > 0;
 
 		if(($this->meta & self::FLAG_WEST) > 0){
-			$f4 = max($f4, 0.0625);
-			$f1 = 0;
-			$f2 = 0;
-			$f5 = 1;
-			$f3 = 0;
-			$f6 = 1;
+			$maxX = max($maxX, 0.0625);
+			$minX = 0;
+			$minY = 0;
+			$maxY = 1;
+			$minZ = 0;
+			$maxZ = 1;
 			$flag = true;
 		}
 
 		if(($this->meta & self::FLAG_EAST) > 0){
-			$f1 = min($f1, 0.9375);
-			$f4 = 1;
-			$f2 = 0;
-			$f5 = 1;
-			$f3 = 0;
-			$f6 = 1;
+			$minX = min($minX, 0.9375);
+			$maxX = 1;
+			$minY = 0;
+			$maxY = 1;
+			$minZ = 0;
+			$maxZ = 1;
 			$flag = true;
 		}
 
 		if(($this->meta & self::FLAG_SOUTH) > 0){
-			$f3 = min($f3, 0.9375);
-			$f6 = 1;
-			$f1 = 0;
-			$f4 = 1;
-			$f2 = 0;
-			$f5 = 1;
+			$minZ = min($minZ, 0.9375);
+			$maxZ = 1;
+			$minX = 0;
+			$maxX = 1;
+			$minY = 0;
+			$maxY = 1;
 			$flag = true;
 		}
 
+		//TODO: Missing NORTH check
+
 		if(!$flag and $this->getSide(Vector3::SIDE_UP)->isSolid()){
-			$f2 = min($f2, 0.9375);
-			$f5 = 1;
-			$f1 = 0;
-			$f4 = 1;
-			$f3 = 0;
-			$f6 = 1;
+			$minY = min($minY, 0.9375);
+			$maxY = 1;
+			$minX = 0;
+			$maxX = 1;
+			$minZ = 0;
+			$maxZ = 1;
 		}
 
-		return new AxisAlignedBB(
-			$this->x + $f1,
-			$this->y + $f2,
-			$this->z + $f3,
-			$this->x + $f4,
-			$this->y + $f5,
-			$this->z + $f6
-		);
+		return new AxisAlignedBB($minX, $minY, $minZ, $maxX, $maxY, $maxZ);
 	}
 
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
+		if(!$blockClicked->isSolid() or $face === Vector3::SIDE_UP or $face === Vector3::SIDE_DOWN){
+			return false;
+		}
 
-	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $facePos, Player $player = null) : bool{
-		//TODO: multiple sides
-		if($blockClicked->isSolid()){
-			$faces = [
-				2 => self::FLAG_SOUTH,
-				3 => self::FLAG_NORTH,
-				4 => self::FLAG_EAST,
-				5 => self::FLAG_WEST
-			];
-			if(isset($faces[$face])){
-				$this->meta = $faces[$face];
-				$this->getLevel()->setBlock($blockReplace, $this, true, true);
+		$faces = [
+			Vector3::SIDE_NORTH => self::FLAG_SOUTH,
+			Vector3::SIDE_SOUTH => self::FLAG_NORTH,
+			Vector3::SIDE_WEST => self::FLAG_EAST,
+			Vector3::SIDE_EAST => self::FLAG_WEST
+		];
 
-				return true;
+		$this->meta = $faces[$face] ?? 0;
+		if($blockReplace->getId() === $this->getId()){
+			$this->meta |= $blockReplace->meta;
+		}
+
+		$this->getLevel()->setBlock($blockReplace, $this, true, true);
+		return true;
+	}
+
+	public function onNearbyBlockChange() : void{
+		$sides = [
+			self::FLAG_SOUTH => Vector3::SIDE_SOUTH,
+			self::FLAG_WEST => Vector3::SIDE_WEST,
+			self::FLAG_NORTH => Vector3::SIDE_NORTH,
+			self::FLAG_EAST => Vector3::SIDE_EAST
+		];
+
+		$meta = $this->meta;
+
+		foreach($sides as $flag => $side){
+			if(($meta & $flag) === 0){
+				continue;
+			}
+
+			if(!$this->getSide($side)->isSolid()){
+				$meta &= ~$flag;
 			}
 		}
 
-		return false;
-	}
-
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			$sides = [
-				1 => 3,
-				2 => 4,
-				4 => 2,
-				8 => 5
-			];
-
-			if(!isset($sides[$this->meta])){
-				return false; //TODO: remove this once placing on multiple sides is supported (these are bitflags, not actual meta values
-			}
-
-			if(!$this->getSide($sides[$this->meta])->isSolid()){ //Replace with common break method
+		if($meta !== $this->meta){
+			if($meta === 0){
 				$this->level->useBreakOn($this);
-				return Level::BLOCK_UPDATE_NORMAL;
+			}else{
+				$this->meta = $meta;
+				$this->level->setBlock($this, $this);
 			}
-		}elseif($type === Level::BLOCK_UPDATE_RANDOM){
-			//TODO: vine growth
 		}
+	}
 
-		return false;
+	public function ticksRandomly() : bool{
+		return true;
+	}
+
+	public function onRandomTick() : void{
+		//TODO: vine growth
 	}
 
 	public function getVariantBitmask() : int{
@@ -185,14 +187,22 @@ class Vine extends Transparent{
 	}
 
 	public function getDrops(Item $item) : array{
-		if($item->isShears()){
-			return parent::getDrops($item);
+		if($item->getBlockToolType() & BlockToolType::TYPE_SHEARS){
+			return $this->getDropsForCompatibleTool($item);
 		}
 
 		return [];
 	}
 
 	public function getToolType() : int{
-		return Tool::TYPE_AXE;
+		return BlockToolType::TYPE_AXE;
+	}
+
+	public function getFlameEncouragement() : int{
+		return 15;
+	}
+
+	public function getFlammability() : int{
+		return 100;
 	}
 }

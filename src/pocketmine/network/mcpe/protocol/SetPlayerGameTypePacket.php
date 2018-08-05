@@ -26,24 +26,23 @@ namespace pocketmine\network\mcpe\protocol;
 #include <rules/DataPacket.h>
 
 
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
 class SetPlayerGameTypePacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::SET_PLAYER_GAME_TYPE_PACKET;
+	public const NETWORK_ID = ProtocolInfo::SET_PLAYER_GAME_TYPE_PACKET;
 
 	/** @var int */
 	public $gamemode;
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->gamemode = $this->getVarInt();
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putVarInt($this->gamemode);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleSetPlayerGameType($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleSetPlayerGameType($this);
 	}
-
 }

@@ -27,10 +27,11 @@ namespace pocketmine\network\mcpe\protocol;
 
 use pocketmine\entity\Attribute;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
+use pocketmine\network\mcpe\protocol\types\EntityLink;
 
 class AddEntityPacket extends DataPacket{
-	const NETWORK_ID = ProtocolInfo::ADD_ENTITY_PACKET;
+	public const NETWORK_ID = ProtocolInfo::ADD_ENTITY_PACKET;
 
 	/** @var int|null */
 	public $entityUniqueId = null; //TODO
@@ -43,25 +44,28 @@ class AddEntityPacket extends DataPacket{
 	/** @var Vector3|null */
 	public $motion;
 	/** @var float */
+	public $pitch = 0.0;
+	/** @var float */
 	public $yaw = 0.0;
 	/** @var float */
-	public $pitch = 0.0;
+	public $headYaw = 0.0;
 
 	/** @var Attribute[] */
 	public $attributes = [];
 	/** @var array */
 	public $metadata = [];
-	/** @var array */
+	/** @var EntityLink[] */
 	public $links = [];
 
-	protected function decodePayload(){
+	protected function decodePayload() : void{
 		$this->entityUniqueId = $this->getEntityUniqueId();
 		$this->entityRuntimeId = $this->getEntityRuntimeId();
 		$this->type = $this->getUnsignedVarInt();
-		$this->position = $this->getVector3Obj();
-		$this->motion = $this->getVector3Obj();
+		$this->position = $this->getVector3();
+		$this->motion = $this->getVector3();
 		$this->pitch = $this->getLFloat();
 		$this->yaw = $this->getLFloat();
+		$this->headYaw = $this->getLFloat();
 
 		$attrCount = $this->getUnsignedVarInt();
 		for($i = 0; $i < $attrCount; ++$i){
@@ -88,14 +92,15 @@ class AddEntityPacket extends DataPacket{
 		}
 	}
 
-	protected function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityUniqueId($this->entityUniqueId ?? $this->entityRuntimeId);
 		$this->putEntityRuntimeId($this->entityRuntimeId);
 		$this->putUnsignedVarInt($this->type);
-		$this->putVector3Obj($this->position);
-		$this->putVector3ObjNullable($this->motion);
+		$this->putVector3($this->position);
+		$this->putVector3Nullable($this->motion);
 		$this->putLFloat($this->pitch);
 		$this->putLFloat($this->yaw);
+		$this->putLFloat($this->headYaw);
 
 		$this->putUnsignedVarInt(count($this->attributes));
 		foreach($this->attributes as $attribute){
@@ -112,8 +117,7 @@ class AddEntityPacket extends DataPacket{
 		}
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleAddEntity($this);
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleAddEntity($this);
 	}
-
 }

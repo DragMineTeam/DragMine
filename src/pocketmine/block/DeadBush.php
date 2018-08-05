@@ -23,8 +23,10 @@ declare(strict_types=1);
 
 namespace pocketmine\block;
 
-use pocketmine\level\Level;
+use pocketmine\item\Item;
+use pocketmine\item\ItemFactory;
 use pocketmine\math\Vector3;
+use pocketmine\Player;
 
 class DeadBush extends Flowable{
 
@@ -38,17 +40,43 @@ class DeadBush extends Flowable{
 		return "Dead Bush";
 	}
 
-
-	public function onUpdate(int $type){
-		if($type === Level::BLOCK_UPDATE_NORMAL){
-			if($this->getSide(Vector3::SIDE_DOWN)->isTransparent() === true){
-				$this->getLevel()->useBreakOn($this);
-
-				return Level::BLOCK_UPDATE_NORMAL;
-			}
+	public function place(Item $item, Block $blockReplace, Block $blockClicked, int $face, Vector3 $clickVector, Player $player = null) : bool{
+		if(!$this->getSide(Vector3::SIDE_DOWN)->isTransparent()){
+			return parent::place($item, $blockReplace, $blockClicked, $face, $clickVector, $player);
 		}
 
 		return false;
 	}
 
+	public function onNearbyBlockChange() : void{
+		if($this->getSide(Vector3::SIDE_DOWN)->isTransparent()){
+			$this->getLevel()->useBreakOn($this);
+		}
+	}
+
+	public function getToolType() : int{
+		return BlockToolType::TYPE_SHEARS;
+	}
+
+	public function getToolHarvestLevel() : int{
+		return 1;
+	}
+
+	public function getDrops(Item $item) : array{
+		if(!$this->isCompatibleWithTool($item)){
+			return [
+				ItemFactory::get(Item::STICK, 0, mt_rand(0, 2))
+			];
+		}
+
+		return parent::getDrops($item);
+	}
+
+	public function getFlameEncouragement() : int{
+		return 60;
+	}
+
+	public function getFlammability() : int{
+		return 100;
+	}
 }

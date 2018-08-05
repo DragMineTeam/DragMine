@@ -25,15 +25,13 @@ namespace pocketmine\entity;
 
 use pocketmine\event\entity\EntityDamageByEntityEvent;
 use pocketmine\event\entity\EntityDamageEvent;
-use pocketmine\item\Item as ItemItem;
+use pocketmine\item\Item;
 use pocketmine\item\ItemFactory;
 use pocketmine\math\Vector3;
-use pocketmine\network\mcpe\protocol\AddEntityPacket;
 use pocketmine\network\mcpe\protocol\EntityEventPacket;
-use pocketmine\Player;
 
 class Squid extends WaterAnimal{
-	const NETWORK_ID = 17;
+	public const NETWORK_ID = self::SQUID;
 
 	public $width = 0.95;
 	public $height = 0.95;
@@ -44,7 +42,7 @@ class Squid extends WaterAnimal{
 
 	private $switchDirectionTicker = 0;
 
-	public function initEntity(){
+	public function initEntity() : void{
 		$this->setMaxHealth(10);
 		parent::initEntity();
 	}
@@ -53,7 +51,7 @@ class Squid extends WaterAnimal{
 		return "Squid";
 	}
 
-	public function attack(EntityDamageEvent $source){
+	public function attack(EntityDamageEvent $source) : void{
 		parent::attack($source);
 		if($source->isCancelled()){
 			return;
@@ -66,10 +64,7 @@ class Squid extends WaterAnimal{
 				$this->swimDirection = (new Vector3($this->x - $e->x, $this->y - $e->y, $this->z - $e->z))->normalize();
 			}
 
-			$pk = new EntityEventPacket();
-			$pk->entityRuntimeId = $this->getId();
-			$pk->event = EntityEventPacket::SQUID_INK_CLOUD;
-			$this->server->broadcastPacket($this->hasSpawned, $pk);
+			$this->broadcastEntityEvent(EntityEventPacket::SQUID_INK_CLOUD);
 		}
 	}
 
@@ -79,7 +74,7 @@ class Squid extends WaterAnimal{
 
 
 	public function entityBaseTick(int $tickDiff = 1) : bool{
-		if($this->closed !== false){
+		if($this->closed){
 			return false;
 		}
 
@@ -98,52 +93,35 @@ class Squid extends WaterAnimal{
 				$this->swimDirection->y = -0.5;
 			}
 
-			$inWater = $this->isInsideOfWater();
+			$inWater = $this->isUnderwater();
 			if(!$inWater){
 				$this->swimDirection = null;
 			}elseif($this->swimDirection !== null){
-				if($this->motionX ** 2 + $this->motionY ** 2 + $this->motionZ ** 2 <= $this->swimDirection->lengthSquared()){
-					$this->motionX = $this->swimDirection->x * $this->swimSpeed;
-					$this->motionY = $this->swimDirection->y * $this->swimSpeed;
-					$this->motionZ = $this->swimDirection->z * $this->swimSpeed;
+				if($this->motion->lengthSquared() <= $this->swimDirection->lengthSquared()){
+					$this->motion = $this->swimDirection->multiply($this->swimSpeed);
 				}
 			}else{
 				$this->swimDirection = $this->generateRandomDirection();
 				$this->swimSpeed = mt_rand(50, 100) / 2000;
 			}
 
-			$f = sqrt(($this->motionX ** 2) + ($this->motionZ ** 2));
-			$this->yaw = (-atan2($this->motionX, $this->motionZ) * 180 / M_PI);
-			$this->pitch = (-atan2($f, $this->motionY) * 180 / M_PI);
+			$f = sqrt(($this->motion->x ** 2) + ($this->motion->z ** 2));
+			$this->yaw = (-atan2($this->motion->x, $this->motion->z) * 180 / M_PI);
+			$this->pitch = (-atan2($f, $this->motion->y) * 180 / M_PI);
 		}
 
 		return $hasUpdate;
 	}
 
-	protected function applyGravity(){
-		if(!$this->isInsideOfWater()){
+	protected function applyGravity() : void{
+		if(!$this->isUnderwater()){
 			parent::applyGravity();
 		}
 	}
 
-
-	public function spawnTo(Player $player){
-		$pk = new AddEntityPacket();
-		$pk->entityRuntimeId = $this->getId();
-		$pk->type = Squid::NETWORK_ID;
-		$pk->position = $this->asVector3();
-		$pk->motion = $this->getMotion();
-		$pk->yaw = $this->yaw;
-		$pk->pitch = $this->pitch;
-		$pk->metadata = $this->dataProperties;
-		$player->dataPacket($pk);
-
-		parent::spawnTo($player);
-	}
-
 	public function getDrops() : array{
 		return [
-			ItemFactory::get(ItemItem::DYE, 0, mt_rand(1, 3))
+			ItemFactory::get(Item::DYE, 0, mt_rand(1, 3))
 		];
 	}
 }

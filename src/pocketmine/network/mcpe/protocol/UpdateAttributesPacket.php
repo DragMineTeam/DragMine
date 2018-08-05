@@ -2,11 +2,11 @@
 
 /*
  *
- *  ____            _        _   __  __ _                  __  __ ____  
- * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \ 
+ *  ____            _        _   __  __ _                  __  __ ____
+ * |  _ \ ___   ___| | _____| |_|  \/  (_)_ __   ___      |  \/  |  _ \
  * | |_) / _ \ / __| |/ / _ \ __| |\/| | | '_ \ / _ \_____| |\/| | |_) |
- * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/ 
- * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_| 
+ * |  __/ (_) | (__|   <  __/ |_| |  | | | | | |  __/_____| |  | |  __/
+ * |_|   \___/ \___|_|\_\___|\__|_|  |_|_|_| |_|\___|     |_|  |_|_|
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,49 +15,39 @@
  *
  * @author PocketMine Team
  * @link http://www.pocketmine.net/
- * 
+ *
  *
 */
+
+declare(strict_types=1);
 
 namespace pocketmine\network\mcpe\protocol;
 
 #include <rules/DataPacket.h>
 
+
 use pocketmine\entity\Attribute;
-use pocketmine\network\mcpe\NetworkSession;
+use pocketmine\network\mcpe\handler\SessionHandler;
 
-class UpdateAttributesPacket extends DataPacket {
+class UpdateAttributesPacket extends DataPacket{
+	public const NETWORK_ID = ProtocolInfo::UPDATE_ATTRIBUTES_PACKET;
 
-	const NETWORK_ID = ProtocolInfo::UPDATE_ATTRIBUTES_PACKET;
-
+	/** @var int */
 	public $entityRuntimeId;
-
 	/** @var Attribute[] */
 	public $entries = [];
 
-	public function decodePayload(){
+	protected function decodePayload() : void{
+		$this->entityRuntimeId = $this->getEntityRuntimeId();
+		$this->entries = $this->getAttributeList();
 	}
 
-	public function encodePayload(){
+	protected function encodePayload() : void{
 		$this->putEntityRuntimeId($this->entityRuntimeId);
-		$this->putUnsignedVarInt(count($this->entries));
-		foreach($this->entries as $entry){
-			$this->putLFloat($entry->getMinValue());
-			$this->putLFloat($entry->getMaxValue());
-			$this->putLFloat($entry->getValue());
-			$this->putLFloat($entry->getDefaultValue());
-			$this->putString($entry->getName());
-		}
+		$this->putAttributeList(...$this->entries);
 	}
 
-	public function handle(NetworkSession $session) : bool{
-		return $session->handleUpdateAttributes($this);
-	}
-
-	/**
-	 * @return PacketName|string
-	 */
-	public function getName() : string{
-		return "UpdateAttributesPacket";
+	public function handle(SessionHandler $handler) : bool{
+		return $handler->handleUpdateAttributes($this);
 	}
 }
