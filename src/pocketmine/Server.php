@@ -274,6 +274,9 @@ class Server{
 	/** @var Config */
 	private $config;
 
+	/** @var Config */
+	private $dragmineConfig;
+
 	/** @var Player[] */
 	private $players = [];
 
@@ -1182,6 +1185,15 @@ class Server{
 	}
 
 	/**
+	   * @param string $key
+	   *
+	   * @return mixed
+	   */
+	public function getDragMineOption(string $key){
+		return $this->dragmineConfig->getNested($key);
+	}
+
+	/**
 	 * @param string $variable
 	 * @param string $defaultValue
 	 *
@@ -1506,6 +1518,29 @@ class Server{
 			$this->memoryManager = new MemoryManager($this);
 
 			$this->logger->info($this->getLanguage()->translateString("pocketmine.server.start", [TextFormat::AQUA . $this->getVersion() . TextFormat::RESET]));
+
+			if(!file_exists($this->dataPath . "dragmine.yml")){
+				if(file_exists($this->getResourcePath() . "dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml")){
+					$content = file_get_contents($this->getResourcePath() . "dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml");
+				}else{
+					$content = file_get_contents($this->getResourcePath() . "dragmine/dragmine_eng.yml");
+				}
+				@file_put_contents($this->dataPath . "dragmine.yml", $content);
+			}
+
+			$this->dragmineConfig = new Config($this->dataPath . "dragmine.yml", Config::YAML);
+			$configVersion = $this->getDragMineOption("dragmine.config-version");
+			$newopt = new Config($this->getResourcePath() . "dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml", Config::YAML);
+			if($configVersion < $newopt->getNested("dragmine.config-version")){
+				$this->logger->notice("[DragMine]The version of the config does not match. Updating to the latest config");
+				unlink($this->dataPath . "dragmine.yml");
+				if(file_exists($this->getResourcePath() . "dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml")){
+					$content = file_get_contents($this->getResourcePath() . "dragmine/dragmine_" . $this->getLanguage()->getLang() . ".yml");
+				}else{
+					$content = file_get_contents($this->getResourcePath() . "dragmine/dragmine_eng.yml");
+				}
+				@file_put_contents($this->dataPath . "dragmine.yml", $content);
+			}
 
 			if(($poolSize = $this->getProperty("settings.async-workers", "auto")) === "auto"){
 				$poolSize = 2;

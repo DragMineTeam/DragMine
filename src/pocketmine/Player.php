@@ -1848,7 +1848,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 	}
 
 	public function _actuallyConstruct(){
-		$namedtag = $this->server->getOfflinePlayerData($this->username); //TODO: make this async
+		if($this->server->getDragMineOption("player.manage-xuid")){
+ 			$namedtag = $this->server->getOfflinePlayerData($this->xuid);
+ 		}else{
+ 			$namedtag = $this->server->getOfflinePlayerData($this->username);
+ 		}
 
 		if(($level = $this->server->getLevelByName($namedtag->getString("Level", "", true))) === null){
 			/** @var Level $level */
@@ -2975,7 +2979,11 @@ class Player extends Human implements CommandSender, ChunkLoader, IPlayer{
 		$this->namedtag->setLong("lastPlayed", (int) floor(microtime(true) * 1000));
 
 		if($this->username != "" and $this->namedtag instanceof CompoundTag){
-			$this->server->saveOfflinePlayerData($this->username, $this->namedtag, $async);
+			if($this->server->getDragMineOption("player.manage-xuid")){
+ 				$this->server->saveOfflinePlayerData($this->xuid, $this->namedtag, $async);
+ 			}else{
+ 				$this->server->saveOfflinePlayerData($this->username, $this->namedtag, $async);
+ 			}
 		}
 	}
 
